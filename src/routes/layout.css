@@ -1,2 +1,13 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
+@plugin "@iconify/tailwind4";
+
+@import '@xyflow/svelte/dist/style.css';
+
+.svelte-flow {
+    --xy-node-border-radius-default: 1;
+    --xy-node-border-default: 1px solid var(--color-slate-300);
+    --xy-node-background-color-default: var(--color-slate-200);
+    --xy-controls-button-background-color: var(--color-slate-100);
+    --xy-controls-button-background-color-hover: var(--color-sky-200);
+}
