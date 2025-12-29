@@ -6,28 +6,6 @@
   let { data } = $props();
   const d = data.electric_rooms;
   let test_data = $state.raw(d);
-const nodes = $state.raw([
-  {
-    id: 'electric_rooms:test',
-    type: 'room_group',
-    height: 200,
-    data: {
-      boards: [],
-      id: "electric_rooms:test",
-      name: 'Щ-67'
-    } ,
-    position: { x: 0, y: 0 }
-  },
-  {
-    id: '1',
-    type: 'board_group',
-    parentId: 'electric_rooms:test',
-    extent: 'parent',
-    width: 100,
-    data: { name: 'щ 69' },
-    position: { x: 10, y: 10 }
-  },
-]);
 
 const edges = $state.raw([
 ]);
