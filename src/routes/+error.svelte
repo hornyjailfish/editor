@@ -2,5 +2,9 @@
 	import { page } from '$app/state';
 </script>
 
-<h1>{page.status}</h1>
-<p>{page.error?.message}</p>
+<div class="justify-center items-center flex flex-col gap-2 w-full h-full">
+	<span class="flex flex-row">
+		<h1 class=" text-center font-bold">Error: </h1>
+		<h1 class=" text-center text-red-500 font-bold">{page.status}</h1></span>
+	<p class="text-center" >{page.error?.message}</p>
+</div>

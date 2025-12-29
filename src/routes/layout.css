@@ -8,6 +8,8 @@
     --xy-node-border-radius-default: 1;
     --xy-node-border-default: 1px solid var(--color-slate-300);
     --xy-node-background-color-default: var(--color-slate-200);
+    --xy-node-group-background-color-default: rgba(240, 240, 240, 0.25);
     --xy-controls-button-background-color: var(--color-slate-100);
     --xy-controls-button-background-color-hover: var(--color-sky-200);
+    --xy-node-default.selectable.selected: var(--color-emerald-500);
 }
