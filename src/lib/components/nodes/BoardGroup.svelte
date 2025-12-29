@@ -3,25 +3,20 @@
     import { ControlButton, NodeResizer, NodeToolbar, Position, type Node, type NodeProps } from '@xyflow/svelte';
     import { useOnSelectionChange } from '@xyflow/svelte';
     import { RecordId } from 'surrealdb';
-	import { twMerge } from 'tailwind-merge';
-	import CustomControlButton from '../CustomControlButton.svelte';
+    import { twMerge } from 'tailwind-merge';
+    import CustomControlButton from '../CustomControlButton.svelte';
+    import type { Board } from '$lib/server/schemas';
 
-    type Room = {
-	    id: RecordId<"electric_rooms">
-	    name: string
-	    boards: RecordId<"boards">[]
-    };
 
     type Props = {
-	data?: Room
+	data?: Board,
 	class?: string
-    } & NodeProps<Node<Room,"group">>
+    } & NodeProps<Node<Board>>
 
     let selected = $state(false);
     let resizeable = $state(false);
 
     useOnSelectionChange(({nodes})=>{
-	console.log("nodes", nodes);
 	if (nodes.some(n=>n.id == id)) {
 	    selected = true;
 	}
@@ -35,6 +30,7 @@
     id = id || data?.id.toString();
     let editTitle = $state(false);
     let name = $state(data?.name);
+
     const resizebuttonColor = $derived.by(()=>{
 	if (resizeable) {
 	    return "bg-yellow-100 hover:bg-yellow-200";
@@ -42,9 +38,12 @@
 	return "bg-slate-100 hover:bg-sky-200";
     });
     const onfocus = (e: FocusEvent &{ currentTarget: EventTarget & HTMLInputElement})=>e.currentTarget.select()
-    // isConnectable = false; // always false for groups
     // TODO: validate data by schema here or on fetch?
 </script>
+
+<div class="size-full flex items-stretch">
+    <p class="size-full text-amber-300 text-[10px]">{data?.name}</p>
+</div>
 <NodeResizer isVisible={selected && resizeable} color="var(--color-yellow-100)" class="rounded-lg" nodeId={id} />
 <NodeToolbar class="text-slate-500 h-full"  position={Position.Right} align="start" nodeId={id}>
     <div class="flex flex-col gap-1 *:rounded-lg" transition:fade>
@@ -57,20 +56,13 @@
     </div>
 </NodeToolbar>
 <NodeToolbar class="text-slate-500" offset={-4}  position={Position.Top} align="center" nodeId={id}>
-    {#if editTitle}
-	<input autofocus {onfocus} class="w-full text-lg focus:bg-yellow-50 text-slate-500 bg-transparent" bind:value={name} onblur={()=>editTitle=false}>
-    {:else}
-	<p ondblclick={()=>{editTitle=true}} class="font-bold text-lg text-slate-500">{name}</p>
-    {/if}
 </NodeToolbar>
-<NodeToolbar isVisible class="text-slate-500" offset={-5}  position={Position.Bottom} align="start" nodeId={id}>
-    <p class="font-extralight italic size-auto">{data?.id}</p>
+<NodeToolbar class="text-slate-500" offset={-5}  position={Position.Bottom} align="start" nodeId={id}>
 </NodeToolbar>
 
 <style>
-:global(.svelte-flow__node-board_group.selectable) {
-    padding: 10px;
-    padding-bottom: 0px;
+:global(.svelte-flow__node-boards.selectable) {
+    padding: 4px;
     border-radius: 0px;
     width: "auto";
     color: var(--xy-node-color, var(--xy-node-color-default));
@@ -78,7 +70,7 @@
     border: var(--xy-node-border, var(--xy-node-border-default));
     background-color: var(--color-slate-100, var(--xy-node-background-color-default));
 }
-:global(.svelte-flow__node-board_group.selectable:hover) {
+:global(.svelte-flow__node-boards.selectable:hover) {
     box-shadow: var(--shadow-lg);
     border-color: var(--color-emerald-100, var(--xy-node-border-color-default));
 }

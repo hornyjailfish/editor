@@ -1,4 +1,5 @@
 <script lang="ts">
+import { error } from '@sveltejs/kit';
 import {
     useSvelteFlow,
     type OnConnectEnd,
@@ -9,6 +10,7 @@ import {
     BackgroundVariant,
     type SvelteFlowProps,
     type Node,
+	type Edge,
 } from '@xyflow/svelte';
 
 import ELK from "elkjs/lib/elk.bundled.js";
@@ -18,34 +20,38 @@ import RoomGroup from '$lib/components/nodes/RoomGroup.svelte';
 import BoardGroup from '$lib/components/nodes/BoardGroup.svelte';
 
 let { nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps = $props();
-
+// console.log("nodes", nodes);
 const elk = new ELK();
 const { fitView } = useSvelteFlow();
-const defalultSize = {width: 200, height: 200};
+const defaultSize = {width: 200, height: 200};
 
-async function layout(nodes: Node[],edges, options) {
+async function layout(nodes: Node[],edges: Edge[], options: any) {
     if (!elk) return { nodes, edges };
     const graph = {
         id: 'root',
-        layoutOptions: options,
-        children: nodes.map((node)=>({
-            id: node.id,
-            width: node.measured?.width || defalultSize.width,
-            height: node.measured?.height || defalultSize.height,
-            x: node.position?.x || 0,
-            y: node.position?.y || 0,
-            data: node.data,
-        })),
-        edges: edges.map((edge)=>({
-            id: edge.id,
-            source: edge.source,
-            target: edge.target,
-
-        })),
+        children: nodes.map((node)=>{
+            if (node.parentId) {
+            }
+            return ({
+                id: node.id,
+                width: node.measured?.width || defaultSize.width,
+                height: node.measured?.height || defaultSize.height,
+                x: node.position?.x || 0,
+                y: node.position?.y || 0,
+                padding: 10,
+                data: node.data,
+            })
+        }) as ElkNode[],
+        // edges: edges.map((edge)=>({
+        //     id: edge.id,
+        //     source: edge.source,
+        //     target: edge.target,
+        // })) as ElkExtendedEdge[],
+        edges: edges as unknown as ElkExtendedEdge[] // TODO: fix type
     };
     const elkGraph = await elk.layout(graph);
     const layoutedNodes = nodes.map((node)=>{
-        const elkNode = elkGraph?.children.find(n=>n.id === node.id);
+        const elkNode = elkGraph?.children?.find(n=>n.id === node.id);
         if (!elkNode) return node;
         return {
             ...node,
@@ -58,14 +64,15 @@ async function layout(nodes: Node[],edges, options) {
     return { nodes: layoutedNodes, edges };
 }
 
-import { error } from '@sveltejs/kit';
+import type { ElkExtendedEdge, ElkNode } from 'elkjs';
+import { Uuid } from 'surrealdb';
 async function onLayout() {
     try {
         let options = {
-            "elk.algorithm": "layered",
-            "elk.direction": "DOWN",
-            "elk.layered.spacing.nodeNodeBetweenLayers": "32",
-            "elk.spacing.nodeNode": "100",
+            "elk.algorithm": "rectpacking",
+            "elk.direction": "RIGHT",
+            "elk.layered.spacing.nodeNodeBetweenLayers": defaultSize.width/8,
+            "elk.spacing.nodeNode": defaultSize.width/8,
         };
         const withLayout = await layout(nodes, edges, options);
         nodes = withLayout.nodes
@@ -87,24 +94,37 @@ const onconnectend: OnConnectEnd = (event, state) => {
 }
 
 const nodeTypes = {
-    room_group: RoomGroup,
-    board_group: BoardGroup,
+    electric_rooms: RoomGroup,
+    boards: BoardGroup,
 }
 
+
+
+	async function testRoom() {
+        const id = Uuid.v4().toString();
+        nodes.push({
+            id,
+            type: 'room_group',
+            data: { id, name: 'щ 69' },
+            position: { x: 0, y: 0 }
+        });
+        await onLayout();
+	}
 </script>
 
 <SvelteFlow
     proOptions={{hideAttribution: true}}
+    oninit={onLayout}
     {nodes}
     {edges}
     {colorMode}
     {nodeTypes}
+    maxZoom={4}
     snapGrid={[5, 5]}
-    onnodeclick={(event) => console.log('on node click', event)}
 >
     <Controls position="top-right"  />
     <Panel class="bg-transparent p-1 flex flex-row gap-2 justify-center items-center w-auto h-fit" position="bottom-center">
-            <Button class="text-emerald-600"  onclick={()=>console.log("click")}>
+            <Button class="text-emerald-600"  onclick={()=>testRoom()}>
                 {#snippet children()}
                     <span class="size-6 icon-[material-symbols--add-2-rounded]"></span>
                     <div class="size-auto">Add Room</div>
