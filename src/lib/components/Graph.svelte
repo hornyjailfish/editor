@@ -10,7 +10,8 @@ import {
     BackgroundVariant,
     type SvelteFlowProps,
     type Node,
-	type Edge,
+    type Edge,
+    type ColorMode,
 } from '@xyflow/svelte';
 
 import ELK from "elkjs/lib/elk.bundled.js";
@@ -66,6 +67,7 @@ async function layout(nodes: Node[],edges: Edge[], options: any) {
 
 import type { ElkExtendedEdge, ElkNode } from 'elkjs';
 import { Uuid } from 'surrealdb';
+import { twMerge } from 'tailwind-merge';
 async function onLayout() {
     try {
         let options = {
@@ -93,6 +95,10 @@ const onconnectend: OnConnectEnd = (event, state) => {
     // TODO: handle out of group case
 }
 
+// INFO: custom node types use global css class for styling
+// each node wrapper has class "svelte-flow__node-{type}"
+// where "type" is key from this table
+// make sure keys in this table match styles in respective node component
 const nodeTypes = {
     electric_rooms: RoomGroup,
     boards: BoardGroup,
@@ -100,16 +106,33 @@ const nodeTypes = {
 
 
 
-	async function testRoom() {
-        const id = Uuid.v4().toString();
-        nodes.push({
-            id,
-            type: 'room_group',
-            data: { id, name: 'щ 69' },
-            position: { x: 0, y: 0 }
-        });
-        await onLayout();
-	}
+async function testRoom() {
+    const id = Uuid.v4().toString();
+    console.log("add room", id);
+    nodes.push({
+        id,
+        type: 'electric_rooms',
+        data: { id, name: 'щ 69' },
+        position: { x: 0, y: 0 }
+    });
+    await onLayout();
+}
+
+type Theme = { mode: ColorMode, icon: string };
+const themes: Theme[] = [
+    { mode: "system", icon: "icon-[material-symbols--computer-outline-rounded]" },
+    { mode: "light", icon: "icon-[material-symbols--light-mode-outline-rounded]" },
+    { mode: "dark", icon: "icon-[material-symbols--dark-mode-outline-rounded]" }
+];
+let themeIdx = $state(0);
+
+function toggleColorMode() {
+    themeIdx =  (themeIdx + 1) % themes.length;
+}
+
+$effect(() => {
+    colorMode = themes[themeIdx].mode;
+});
 </script>
 
 <SvelteFlow
@@ -124,25 +147,32 @@ const nodeTypes = {
 >
     <Controls position="top-right"  />
     <Panel class="bg-transparent p-1 flex flex-row gap-2 justify-center items-center w-auto h-fit" position="bottom-center">
-            <Button class="text-emerald-600"  onclick={()=>testRoom()}>
-                {#snippet children()}
-                    <span class="size-6 icon-[material-symbols--add-2-rounded]"></span>
-                    <div class="size-auto">Add Room</div>
-                {/snippet}
-            </Button>
-            <Button class="text-amber-600"  onclick={()=>onLayout()}>
-                {#snippet children()}
-                    <span class="size-6 icon-[material-symbols--responsive-layout-outline-rounded]"></span>
-                    <div class="size-auto">layout?</div>
-                {/snippet}
-            </Button>
+        <Button class="text-emerald-600"  onclick={()=>testRoom()}>
+            {#snippet children()}
+                <span class="text-emerald-600 size-6 icon-[material-symbols--add-2-rounded]"></span>
+                <div class="size-auto">Add Room</div>
+            {/snippet}
+        </Button>
+        <Button onclick={()=>onLayout()}>
+            {#snippet children()}
+                <span class="text-amber-600 size-6 icon-[material-symbols--responsive-layout-outline-rounded]"></span>
+                <div class="size-auto">layout?</div>
+            {/snippet}
+        </Button>
     </Panel>
     <Panel class="bg-transparent p-1 flex flex-row gap-2 justify-center items-center w-auto h-fit" position="bottom-right">
-            <Button title="Update db" class="hover:bg-rose-200 hover:text-rose-500" onclick={()=>console.log("click")}>
-                {#snippet children()}
-                    <span class="size-6 icon-[material-symbols--database-upload-outline-rounded]"></span>
-                {/snippet}
-            </Button>
+        <Button title="Update db" --color="var(--color-rose-400)" class="hover:bg-rose-200 hover:text-rose-500" onclick={()=>console.log("click")}>
+            {#snippet children()}
+                <span class="size-6 icon-[material-symbols--database-upload-outline-rounded]"></span>
+            {/snippet}
+        </Button>
     </Panel>
-    <Background size={1} bgColor='var(--color-gray-300)' variant={BackgroundVariant.Dots} />
+    <Panel class="bg-transparent p-1 flex flex-row gap-2 justify-center items-center w-auto h-fit" position="top-left">
+        <Button title={themes[themeIdx].mode+" mode"} onclick={()=>{toggleColorMode(); }}>
+            {#snippet children()}
+                <span class={twMerge("size-6", themes[themeIdx].icon)}></span>
+            {/snippet}
+        </Button>
+    </Panel>
+    <Background size={1} variant={BackgroundVariant.Dots} />
 </SvelteFlow>

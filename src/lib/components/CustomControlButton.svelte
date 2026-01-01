@@ -1,27 +1,21 @@
 <script lang="ts">
   import { twMerge } from 'tailwind-merge';
   import { clsx } from 'clsx';
+	import { ControlButton, type ControlButtonProps } from '@xyflow/svelte';
+
   let {
-    class: className,
-    type="button",
-    title="button",
-    onclick,
     children,
+    class: className,
     ...restProps
-  } = $props();
+  }: Partial<ControlButtonProps> = $props();
 </script>
 
-<button
-    {type}
-    {onclick}
+<ControlButton
     class={clsx(className)}
     {...restProps}
 >
   {@render children?.()}
-</button>
+</ControlButton>
 
 <style>
-  .button {
-
-}
 </style>
