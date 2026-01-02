@@ -7,10 +7,22 @@ export type ElectricRoom =  {
 	boards: RecordId<"boards">[];
 }
 
+export type ElectricRoomFetched =  {
+	id: RecordId<"electric_rooms">;
+	name: string;
+	boards: BoardFetched[];
+}
+
 export type Board =  {
 	id: RecordId<"boards">;
 	name: string;
 	breakers: RecordId<"breakers">[];
+}
+
+export type BoardFetched =  {
+	id: RecordId<"boards">;
+	name: string;
+	breakers: Breaker[];
 }
 
 export type Breaker = {
