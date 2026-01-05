@@ -1,7 +1,7 @@
 <script lang="ts">
   import { SvelteFlowProvider } from "@xyflow/svelte";
   import type { ColorMode } from "@xyflow/system";
-  import ELK from "elkjs/lib/elk.bundled.js";
+  import ELK, { type ElkNode } from "elkjs/lib/elk.bundled.js";
 
   import { elk2flow } from "$lib/utils";
   import Graph from "$lib/components/Graph.svelte";
@@ -13,7 +13,7 @@
 
   const elk = new ELK();
   const layouting = elk.layout(data.elkTree);
-  console.log("nodes", nodes);
+
   function oninit(e: any) {
 
   }
@@ -21,9 +21,10 @@
   let colorMode: ColorMode = $state("system");
 </script>
 {#await layouting}
-  loading
+  loading...
   {:then layout}
-    {#await Promise.all(layout.children.map((node)=>elk2flow(node)).flat())}
+    {#await Promise.all(layout!.children!.map((node)=>elk2flow(node as ElkNode & any)).flat())}
+      creating flow...
     {:then flow}
       <SvelteFlowProvider>
         <Graph nodes={flow} {edges} {colorMode} />

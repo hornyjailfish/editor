@@ -1,6 +1,7 @@
 import * as Custom from "$lib/components/nodes";
-import type { Node, Dimensions, Edge, NodeTypes, XYPosition } from "@xyflow/svelte";
-import type { ElkNode } from "elkjs/lib/elk-api";
+import type { Node, Dimensions, Edge, NodeTypes, XYPosition, NodeProps } from "@xyflow/svelte";
+import type { NodeBase } from "@xyflow/system";
+import type { ElkLayoutAlgorithmDescription, ElkNode, LayoutOptions } from "elkjs/lib/elk-api";
 
 export type NodeDimensions = Dimensions & { position: XYPosition };
 
@@ -29,9 +30,15 @@ export const breakerDimensions = {
 	position: { x: 0, y: 0 },
 }
 
-export const Flow: { nodeTypes: NodeTypes, dimensions: { [key: string]: NodeDimensions } } = {
+export type FlowOptions = {
+	nodeTypes: NodeTypes,
+	dimensions: { [key: string]: NodeDimensions },
+	flowOptions: { [key: string]: Omit<NodeBase, "id" | "data" | "type" | "position"> },
+	layoutOptions: { [key: string]: LayoutOptions },
+};
+export const Flow: FlowOptions = {
 	nodeTypes: {
-		electric_rooms: Custom.Room,
+		electric_rooms: Custom.BasedRoom,
 		boards: Custom.Board,
 		breakers: Custom.Breaker,
 		root_breakers: Custom.RootBreaker,
@@ -44,20 +51,25 @@ export const Flow: { nodeTypes: NodeTypes, dimensions: { [key: string]: NodeDime
 	},
 	flowOptions: {
 		electric_rooms: {
-			isConnectable: false,
+			connectable: false,
+			selectable: true,
+			deletable: false,
+			expandParent: true,
 		},
 		boards: {
-			isConnectable: false,
-			draggable: false,
+			connectable: false,
+			draggable: true,
 			expandParent: true,
 		},
 		breakers: {
-			isConnectable: true,
+			connectable: true,
 			draggable: false,
+			expandParent: true,
 		},
 		root_breakers: {
-			isConnectable: true,
+			connectable: true,
 			draggable: false,
+			expandParent: true,
 		},
 	},
 	layoutOptions: {
@@ -82,8 +94,11 @@ export const Flow: { nodeTypes: NodeTypes, dimensions: { [key: string]: NodeDime
 
 let nodes: Node[] = [];
 let edges: Edge[] = [];
-
-export function elk2flow(elk: ElkNode & { type: string, data: any }, parentId?: string) {
+type ElkWithData = ElkNode & Partial<{ type: string, data: any }>
+export function elk2flow(elk: ElkWithData, parentId?: string): Node | Node[] {
+	if (!elk.type) {
+		elk.type = "default";
+	}
 	const dimensions = Flow.dimensions[elk.type]; // TODO: this could error
 	const position = {
 		x: elk.x || dimensions.position.x,
@@ -104,14 +119,15 @@ export function elk2flow(elk: ElkNode & { type: string, data: any }, parentId?: 
 		// TODO: they pretty similar
 	}
 
-	let tree = [flow];
+	let tree: Array<Node[]> | Node[] = [flow];
 	if (!elk.children || elk.children.length === 0) {
 		// nodes.push(flow);
 		return tree;
 	}
 
 	for (const node of elk.children) {
-		tree.push(elk2flow(node, elk.id));
+		const item = elk2flow(node, elk.id)
+		tree.push(item);
 	}
 	return tree.flat();
 	// return { nodes, edges };

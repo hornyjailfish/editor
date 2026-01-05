@@ -1,7 +1,13 @@
 <script lang="ts">
+import type { ElkExtendedEdge, ElkNode } from 'elkjs';
+import { Uuid } from 'surrealdb';
+import { twMerge } from 'tailwind-merge';
+import { fade } from 'svelte/transition';
 import { error } from '@sveltejs/kit';
 import {
     useSvelteFlow,
+    useStore,
+    useNodes,
     type OnConnectEnd,
     SvelteFlow,
     Panel,
@@ -12,6 +18,10 @@ import {
     type Node,
     type Edge,
     type ColorMode,
+	useOnSelectionChange,
+	NodeToolbar,
+	Position,
+	ControlButton,
 } from '@xyflow/svelte';
 
 import ELK from "elkjs/lib/elk.bundled.js";
@@ -23,10 +33,10 @@ import Button from '$lib/components/Button.svelte';
 // where "type" is key from this table
 // make sure keys in this table match styles in respective node component
 import { Flow } from '$lib/utils';
+	import Toolbar from './Toolbar.svelte';
 
 let { nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps = $props();
 const elk = new ELK();
-console.log("nodes", nodes);
 const { fitView } = useSvelteFlow();
 
 async function layout(nodes: Node[],edges: Edge[], options: any) {
@@ -68,9 +78,6 @@ async function layout(nodes: Node[],edges: Edge[], options: any) {
     return { nodes: layoutedNodes, edges };
 }
 
-import type { ElkExtendedEdge, ElkNode } from 'elkjs';
-import { Uuid } from 'surrealdb';
-import { twMerge } from 'tailwind-merge';
 async function onLayout() {
     try {
         let options = {
@@ -125,13 +132,27 @@ function toggleColorMode() {
     themeIdx =  (themeIdx + 1) % themes.length;
 }
 
+const node = useNodes();
 $effect(() => {
     colorMode = themes[themeIdx].mode;
 });
+
+let selectedNodesIds = $state<string[]>([]);
+let selectedNodes = $state<Node[]>([]);
+
+useOnSelectionChange(({nodes})=>{
+    selectedNodesIds = nodes.map(n=>n.id);
+    selectedNodes = nodes;
+});
+let selectionReady = $state(true);
 </script>
 
 <SvelteFlow
     proOptions={{hideAttribution: true}}
+    onselectionend={(e)=>{selectionReady = true}}
+    onselectionstart={(e)=>{selectionReady = false}}
+    selectionOnDrag
+    panOnDrag={[1]}
     {nodes}
     {edges}
     {colorMode}
@@ -139,6 +160,7 @@ $effect(() => {
     maxZoom={4}
     snapGrid={[5, 5]}
 >
+    <Toolbar ready={selectionReady}  />
     <Controls position="top-right"  />
     <Panel class="bg-transparent p-1 flex flex-row gap-2 justify-center items-center w-auto h-fit" position="bottom-center">
         <Button class="text-emerald-600"  onclick={()=>testRoom()}>
