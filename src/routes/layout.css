@@ -29,9 +29,13 @@
 /*    --xy-node-default.selectable.selected: var(--color-emerald-500);*/
 }
 
-.svelte-flow__resize-control {
-
+.svelte-flow__resize-control.line {
+    border-width: 1px;
 }
+.svelte-flow__resize-control.handle {
+    border-width: 0px;
+}
+
 .svelte-flow__node {
     border-radius: 8px;
     border: 1px solid var(--color-stone-400);
@@ -39,6 +43,7 @@
 .svelte-flow__node.selectable {
     box-shadow: var(--shadow-sm);
 }
+
 .svelte-flow__node.selectable:hover {
     box-shadow: var(--shadow-lg);
     border: 1px solid --alpha(var(--color-emerald-100)/30%);
