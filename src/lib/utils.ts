@@ -39,7 +39,7 @@ export type FlowOptions = {
 export const Flow: FlowOptions = {
 	nodeTypes: {
 		electric_rooms: Custom.BasedRoom,
-		boards: Custom.Board,
+		boards: Custom.BasedBoard,
 		breakers: Custom.Breaker,
 		root_breakers: Custom.RootBreaker,
 	},
@@ -52,7 +52,6 @@ export const Flow: FlowOptions = {
 	flowOptions: {
 		electric_rooms: {
 			connectable: false,
-			selectable: true,
 			deletable: false,
 			expandParent: true,
 		},

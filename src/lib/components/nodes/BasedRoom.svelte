@@ -21,13 +21,6 @@
     let room: HTMLElement | undefined = $state();
 </script>
 
-<!-- <NodeToolbar class="text-slate-500 h-full"  position={Position.Left} align="end" nodeId={id}> -->
-<!--     <div class="flex flex-col gap-1 *:rounded-lg" transition:fade> -->
-<!--         <ControlButton {...resizeControlProps} type="button" onclick={()=>resizeable=!resizeable}> -->
-<!--             <span class="icon-[material-symbols--resize-rounded]"></span> -->
-<!--         </ControlButton> -->
-<!--     </div> -->
-<!-- </NodeToolbar> -->
 <Base {...rest} class={className} {type} {id} {data}>
     {#snippet children()}
         <Room {...rest} {type} {data} {id} class="size-full" />

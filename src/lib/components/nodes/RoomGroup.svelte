@@ -3,7 +3,7 @@ import { fade } from 'svelte/transition';
 import { ControlButton, NodeToolbar, Position, type Node, type NodeProps } from '@xyflow/svelte';
 import { useOnSelectionChange, useViewport, useSvelteFlow, useInternalNode } from '@xyflow/svelte';
 
-import type {  ElectricRoom } from '$lib/server/schemas';
+import type { ElectricRoom } from '$lib/server/schemas';
 
 type Props = {
     data?: ElectricRoom,
