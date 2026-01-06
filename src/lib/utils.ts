@@ -40,8 +40,8 @@ export const Flow: FlowOptions = {
 	nodeTypes: {
 		electric_rooms: Custom.BasedRoom,
 		boards: Custom.BasedBoard,
-		breakers: Custom.Breaker,
-		root_breakers: Custom.RootBreaker,
+		breakers: Custom.BasedBreaker,
+		root_breakers: Custom.BasedRootBreaker,
 	},
 	dimensions: {
 		electric_rooms: roomDimensions,

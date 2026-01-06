@@ -1,8 +1,6 @@
 <script lang="ts">
     import { type Node, type NodeProps, Handle, Position } from '@xyflow/svelte';
     import type { Breaker } from '$lib/server/schemas';
-    import { twMerge } from 'tailwind-merge';
-    import clsx from 'clsx';
 
     type Props = {
 	data?: Breaker,
