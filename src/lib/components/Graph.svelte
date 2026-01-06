@@ -1,3 +1,10 @@
+<script module>
+import { SvelteMap } from "svelte/reactivity";
+import { writable } from "svelte/store";
+
+export const resizer = writable(new SvelteMap<string, boolean>());
+</script>
+
 <script lang="ts">
 import type { ElkExtendedEdge, ElkNode } from 'elkjs';
 import { Uuid } from 'surrealdb';
@@ -33,7 +40,7 @@ import Button from '$lib/components/Button.svelte';
 // where "type" is key from this table
 // make sure keys in this table match styles in respective node component
 import { Flow } from '$lib/utils';
-	import Toolbar from './Toolbar.svelte';
+import Toolbar  from './Toolbar.svelte';
 
 let { nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps = $props();
 const elk = new ELK();
@@ -105,9 +112,6 @@ const onconnectend: OnConnectEnd = (event, state) => {
     // TODO: handle out of group case
 }
 
-
-
-
 async function testRoom() {
     const id = Uuid.v4().toString();
     console.log("add room", id);
@@ -144,11 +148,16 @@ useOnSelectionChange(({nodes})=>{
     selectedNodesIds = nodes.map(n=>n.id);
     selectedNodes = nodes;
 });
+
 let selectionReady = $state(true);
+function oninit() {
+    nodes.forEach(n=>$resizer.set(n.id, false));
+}
 </script>
 
 <SvelteFlow
     proOptions={{hideAttribution: true}}
+    {oninit}
     onselectionend={(e)=>{selectionReady = true}}
     onselectionstart={(e)=>{selectionReady = false}}
     selectionOnDrag
@@ -157,7 +166,7 @@ let selectionReady = $state(true);
     {edges}
     {colorMode}
     nodeTypes={Flow.nodeTypes}
-    maxZoom={4}
+    maxZoom={99}
     snapGrid={[5, 5]}
 >
     <Toolbar ready={selectionReady}  />

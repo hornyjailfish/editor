@@ -3,11 +3,12 @@ import { onMount, type Snippet } from "svelte";
 import type { HTMLAttributes } from "svelte/elements";
 import { fade } from "svelte/transition";
 import { useResizeObserver } from "runed";
-import {  NodeResizer, NodeToolbar, Position, useInternalNode, useOnSelectionChange, useSvelteFlow, type Node } from "@xyflow/svelte";
+import {  ControlButton, NodeResizer, NodeToolbar, Position, useInternalNode, useOnSelectionChange, useSvelteFlow, type ControlButtonProps, type Node } from "@xyflow/svelte";
 import type { NodeProps } from "@xyflow/system";
 import { Flow } from "$lib/utils";
 
-import { Toolbar } from "$lib/client/toolbar.svelte";
+
+import { resizer } from "$lib/components/Graph.svelte";
 
 type ZoomOption = {};
 
@@ -16,7 +17,7 @@ type Props = NodeProps<Node> & HTMLAttributes<HTMLDivElement> & {
     zoomOption?: ZoomOption;
 };
 
-let { id, zoomOption, data, type, class: className, children, ...rest }: Props = $props();
+let { id, zoomOption, data, type, class: className, children }: Props = $props();
 
 let selectedNodes = $state<string[]>([]);
 
@@ -27,7 +28,8 @@ useOnSelectionChange(({nodes})=>{
 });
 
 let selected = $derived.by(()=>selectedNodes.length > 0 && selectedNodes.every(item=>item == id));
-let resizeable = $state(false);
+
+let resizeable = $derived(selected && $resizer.get(id));
 
 let content: HTMLElement | null = $state(null);
 function setRef(el: HTMLElement) {
@@ -43,8 +45,8 @@ onMount(()=>{
 let resizeProps = $state({
     minWidth: Flow.dimensions[type].width,
     minHeight: Flow.dimensions[type].height,
-    maxWidth: 128,
-    maxHeight: 128,
+    maxWidth: Flow.dimensions[type].width*2,
+    maxHeight: Flow.dimensions[type].height*2,
 });
 
 const clamp = (value: number, min: number, max: number) =>
@@ -57,16 +59,24 @@ useResizeObserver(()=>content, ([info])=>{
 });
 
 const flow = useSvelteFlow();
-const node = flow.getInternalNode(id);
 
-function onclick(e: MouseEvent) {
-    e.stopPropagation();
-    if (!node) return;
-    flow.fitBounds(flow.getNodesBounds([node]),{ padding: .1 });
-}
+// const resizeControlProps = $derived.by<ControlButtonProps>(()=>{
+//     if (resizeable) {
+// 	return {
+// 	    title: "Disable resizing",
+// 	    color: "var(--color-orange-500)",
+// 	    bgColorHover: "var(--color-orange-500)",
+// 	    borderColor: "var(--color-orange-500)",
+// 	    style: "border: 1px solid var(--color-orange-600)",
+// 	};
+//     }
+//     return {
+// 	title: "Enable resizing",
+//     };
+// });
 </script>
 
-<NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-yellow-100)" class="rounded-lg" nodeId={id} />
+<NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-yellow-100)" lineClass="h-8" nodeId={id} />
 <div transition:fade bind:this={content} class="size-full flex items-stretch">
     {@render children?.({ref: setRef})}
 </div>

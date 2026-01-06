@@ -1,12 +1,9 @@
 <script lang="ts">
 import { fade } from 'svelte/transition';
-import { ControlButton, NodeToolbar, Position, type ControlButtonProps, type Node, type NodeProps } from '@xyflow/svelte';
+import { ControlButton, NodeToolbar, Position, type Node, type NodeProps } from '@xyflow/svelte';
 import { useOnSelectionChange, useViewport, useSvelteFlow, useInternalNode } from '@xyflow/svelte';
-import CustomControlButton from '../CustomControlButton.svelte';
 
 import type {  ElectricRoom } from '$lib/server/schemas';
-import { useResizeObserver } from 'runed';
-import { Flow } from '$lib/utils';
 
 type Props = {
     data?: ElectricRoom,
@@ -14,19 +11,7 @@ type Props = {
 } & NodeProps<Node<ElectricRoom>>
 let { id, data, class: className, type, ...rest }: Props = $props();
 
-let selectedNodes = $state<string[]>([]);
-
-useOnSelectionChange(({nodes})=>{
-    const selection = nodes.filter(n=>n.selected);
-    selectedNodes = selection.map(n=>n.id);
-});
-
-let resizeable = $state(false);
 let content: HTMLDivElement | undefined = $state();
-
-
-
-
 
 id = id || data?.id.toString();
 
@@ -44,40 +29,34 @@ function ondblclick(e: MouseEvent) {
     flow.fitBounds(flow.getNodesBounds([node.current!]),{ padding: .1 });
 }
 
-const resizeControlProps = $derived.by<ControlButtonProps>(()=>{
-    if (resizeable) {
-	return {
-	    title: "Disable resizing",
-	    color: "var(--color-orange-500)",
-	    bgColorHover: "var(--color-orange-500)",
-	    borderColor: "var(--color-orange-500)",
-	    style: "border: 1px solid var(--color-orange-600)",
-	};
-    }
-    return {
-	title: "Enable resizing",
-    };
-});
-
 let zoom = $derived(viewport.current.zoom > 1);
+const childs = flow.getNodes().filter(n=>n.parentId == id);
 
+$effect(()=>{
+    childs.forEach(n=>{
+	flow.updateNode(n.id,(n)=>{return {hidden: !zoom}})
+    });
+});
 const onfocus = (e: FocusEvent &{ currentTarget: EventTarget & HTMLInputElement})=>e.currentTarget.select()
-// isConnectable = false; // always false for groups
+
 // TODO: validate data by schema here or on fetch?
+
+let clientNodes: Node[] = [];
+function addBoard(event: MouseEvent & { currentTarget: EventTarget & HTMLButtonElement; }) {
+
+}
 </script>
+
 <div {ondblclick} bind:this={content} transition:fade class="room size-full" role="list">
     {#if !zoom}
 	<div class="flex flex-row text-center justify-center items-center w-full h-full">
-	    <p class="font-bold text-5xl text-slate-400">{name}</p>
+	    <p class="font-bold text-5xl text-slate-400/20">{name}</p>
 	</div>
     {:else}
 	<NodeToolbar class="text-slate-500 h-full"  position={Position.Right} align="start" nodeId={id}>
 	    <div class="flex flex-col gap-1 *:rounded-lg" transition:fade>
-		<ControlButton title="Add board" onclick={()=>console.log("click")}>
+		<ControlButton title="Add board" onclick={addBoard}>
 		    <span class="icon-[material-symbols--add-2-rounded]"></span>
-		</ControlButton>
-		<ControlButton {...resizeControlProps} type="button" onclick={()=>resizeable=!resizeable}>
-		    <span class="icon-[material-symbols--resize-rounded]"></span>
 		</ControlButton>
 	    </div>
 	</NodeToolbar>
@@ -94,6 +73,7 @@ const onfocus = (e: FocusEvent &{ currentTarget: EventTarget & HTMLInputElement}
 	</NodeToolbar>
     {/if}
 </div>
+
 <style>
 .room {
 font-size: 10px;
@@ -111,6 +91,18 @@ backdrop-filter: blur(2px);
 :global(.svelte-flow__node-electric_rooms.selectable.selected) {
 border: 1px solid var(--color-emerald-500);
 box-shadow: var(--shadow-2xl);
+}
+:global(.svelte-flow__node-electric_rooms.selectable.selected:not(.draggable)) {
+border: 1px solid var(--color-yellow-500);
+box-shadow: var(--shadow-2xl);
+}
+:global(.svelte-flow__node-electric_rooms:not(.draggable)) {
+padding: 10px;
+font-size: 10px;
+background-color: var(--xy-node-group-background-color-default, var(--xy-node-group-background-color-default));
+text-align: center;
+border: 1px dashed --alpha(var(--color-yellow-400)/30%);
+backdrop-filter: blur(2px);
 }
 
 </style>

@@ -1,8 +1,7 @@
 <script module>
 import { ControlButton, type ControlButtonProps } from "@xyflow/svelte";
-import TristateButton from "$lib/components/TristateButton.svelte";
 
-export { DumbButton, Lock, ResizeButton, FitViewButton, DeleteButton };
+export { DumbButton, Selectable, Lock, ResizeButton, FitViewButton, DeleteButton };
 
 </script>
 {#snippet DumbButton(props: ControlButtonProps)}
@@ -17,10 +16,15 @@ export { DumbButton, Lock, ResizeButton, FitViewButton, DeleteButton };
     </ControlButton>
 {/snippet}
 
-{#snippet Lock(props: ControlButtonProps & { nodes?: string[] })}
-    <TristateButton {...props} type="button">
+{#snippet Selectable(props: ControlButtonProps )}
+    <ControlButton {...props} type="button">
+        <span class="icon-[material-symbols--deselect-sharp]"></span>
+    </ControlButton>
+{/snippet}
+{#snippet Lock(props: ControlButtonProps )}
+    <ControlButton {...props} type="button">
         <span class="icon-[material-symbols--drag-pan-rounded]"></span>
-    </TristateButton>
+    </ControlButton>
 {/snippet}
 
 {#snippet DeleteButton(props: ControlButtonProps)}

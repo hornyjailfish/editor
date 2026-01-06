@@ -13,8 +13,8 @@ export default {
 }
 // INFO: type infered from id.tb (table name)
 export const roomDimensions = {
-	width: 128,
-	height: 128,
+	width: 512,
+	height: 512,
 	position: { x: 0, y: 0 },
 }
 
@@ -58,7 +58,7 @@ export const Flow: FlowOptions = {
 		},
 		boards: {
 			connectable: false,
-			draggable: true,
+			draggable: false,
 			expandParent: true,
 		},
 		breakers: {
