@@ -124,7 +124,7 @@ export class DragControl extends PropertyControl {
 	}
 	onStateChange = (_cur?: MultiState, _pre?: MultiState) => {
 		this.props.title = this.perState("Lock movement", "Unlock movement", "Swap state")
-		this.props.color = this.perState("var(--color-sky-400)", "var(--color-red-500)", "var(--color-yellow-500)")
+		this.props.color = this.perState(undefined, "var(--color-red-500)", "var(--color-yellow-500)")
 		this.props.style = this.perState(undefined, "border: 2px solid var(--color-red-500)", "border: 1px dashed var(--color-yellow-500)")
 	}
 }

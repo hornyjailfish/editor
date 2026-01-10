@@ -13,7 +13,6 @@ let { ready = $bindable(true) } = $props();
 
 const toolbar = new Toolbar();
 
-
 const lock = new DragControl({
     condition: ()=>toolbar.selectedNodes.length > 0
 });
@@ -23,10 +22,7 @@ const selectable = new SelectableControl({
 });
 
 
-const enable_resizer: SelectedNodesControl = new ResizeControl({
-    item: ResizeButton,
-    type: "resizer",
-    prio: 0,
+const enable_resizer = new ResizeControl({
     condition: ()=>toolbar.selectedNodes.length == 1
 });
 
