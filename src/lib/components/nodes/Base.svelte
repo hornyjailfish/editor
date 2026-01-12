@@ -3,7 +3,7 @@ import { onMount, type Snippet } from "svelte";
 import type { HTMLAttributes } from "svelte/elements";
 import { fade } from "svelte/transition";
 import { useResizeObserver } from "runed";
-import {  ControlButton, NodeResizer, NodeToolbar, Position, useInternalNode, useOnSelectionChange, useSvelteFlow, type ControlButtonProps, type Node } from "@xyflow/svelte";
+import {  NodeResizer, useOnSelectionChange, useSvelteFlow, type Node } from "@xyflow/svelte";
 import type { NodeProps } from "@xyflow/system";
 import { Flow } from "$lib/utils";
 
@@ -56,9 +56,16 @@ useResizeObserver(()=>content, ([info])=>{
     if (!content || !info) return;
     resizeProps.minWidth = clamp(info.contentRect.width, content.scrollWidth , resizeProps.maxWidth)+8;
     resizeProps.minHeight = clamp(info.contentRect.height, content.scrollHeight, resizeProps.maxHeight)+8;
+    if (node) {
+        console.log("resize?", node.width, node.height, resizeProps.minWidth, resizeProps.minHeight);
+        node.width = resizeProps.minWidth;
+        node.height = resizeProps.minHeight;
+        flow.updateNode(id, node);
+    }
 });
 
 const flow = useSvelteFlow();
+const node = flow.getNode(id)
 
 // const resizeControlProps = $derived.by<ControlButtonProps>(()=>{
 //     if (resizeable) {
