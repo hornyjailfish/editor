@@ -6,10 +6,12 @@ export const resizer = writable(new SvelteMap<string, boolean>());
 </script>
 
 <script lang="ts">
-import type { ElkExtendedEdge, ElkNode } from 'elkjs';
+import type { ElkExtendedEdge, ElkNode } from 'elkjs/lib/elk-api';
+import ELK from 'elkjs/lib/elk-api';
+import Worker from "elkjs/lib/elk-worker?worker";
+
 import { Uuid } from 'surrealdb';
 import { twMerge } from 'tailwind-merge';
-import { fade } from 'svelte/transition';
 import { error } from '@sveltejs/kit';
 import {
     useSvelteFlow,
@@ -25,14 +27,11 @@ import {
     type Node,
     type Edge,
     type ColorMode,
-	useOnSelectionChange,
-	NodeToolbar,
-	Position,
-	ControlButton,
+    useOnSelectionChange,
+    NodeToolbar,
+    Position,
+    ControlButton,
 } from '@xyflow/svelte';
-
-import ELK from "elkjs/lib/elk.bundled.js";
-
 import Button from '$lib/components/Button.svelte';
 
 // INFO: custom node types use global css class for styling
@@ -41,38 +40,34 @@ import Button from '$lib/components/Button.svelte';
 // make sure keys in this table match styles in respective node component
 import { Flow } from '$lib/utils';
 import Toolbar  from './Toolbar.svelte';
+	import { findParent, flatToNested, xy2elk } from "$lib/client/utls";
 
 let { nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps = $props();
-const elk = new ELK();
+const elk = new ELK({ workerFactory: ()=>new Worker({ name: new URL('elkjs/lib/elk-worker.min.js', import.meta.url).toString()}) });
 const { fitView } = useSvelteFlow();
 
 async function layout(nodes: Node[],edges: Edge[], options: any) {
-    if (!elk) return { nodes, edges };
+    if (!elk) return { nodes, edges }; // TODO: throw?
+    const nested = flatToNested(nodes);
     const graph = {
         id: 'root',
-        children: nodes.map((node)=>{
-            if (node.parentId) {
-            }
-            return ({
-                id: node.id,
-                width: node.measured?.width ,
-                height: node.measured?.height,
-                x: node.position?.x || 0,
-                y: node.position?.y || 0,
-                padding: 10,
-                data: node.data,
-            })
-        }) as ElkNode[],
+        children: nested,
         // edges: edges.map((edge)=>({
         //     id: edge.id,
         //     source: edge.source,
         //     target: edge.target,
         // })) as ElkExtendedEdge[],
-        edges: edges as unknown as ElkExtendedEdge[] // TODO: fix type
+        edges: edges as unknown as ElkExtendedEdge[] // TODO: handle edges
     };
-    const elkGraph = await elk.layout(graph);
+    const elkGraph = await elk.layout(graph, options);
+    // console.log("elkGraph", elkGraph);
     const layoutedNodes = nodes.map((node)=>{
-        const elkNode = elkGraph?.children?.find(n=>n.id === node.id);
+        let elkNode
+        // INFO: there are only 3 nested levels right now Room-->Board-->Breaker
+        // if it changes should rewrite it to maps/sets for better performance
+        elkNode = elkGraph?.children?.find(n=>n.id === node.id );
+        if (!elkNode) {
+        }
         if (!elkNode) return node;
         return {
             ...node,
@@ -80,6 +75,8 @@ async function layout(nodes: Node[],edges: Edge[], options: any) {
                 x: elkNode.x,
                 y: elkNode.y,
             },
+            width: elkNode.width,
+            height: elkNode.height,
         };
     });
     return { nodes: layoutedNodes, edges };
@@ -94,6 +91,7 @@ async function onLayout() {
             // "elk.spacing.nodeNode": defaultSize.width/8,
         };
         const withLayout = await layout(nodes, edges, options);
+        console.log("layouted", withLayout);
         nodes = withLayout.nodes
         edges = withLayout.edges
         fitView();
@@ -153,6 +151,7 @@ let selectionReady = $state(true);
 function oninit() {
     nodes.forEach(n=>$resizer.set(n.id, false));
 }
+
 </script>
 
 <SvelteFlow

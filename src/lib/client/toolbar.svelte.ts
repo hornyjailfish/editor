@@ -52,8 +52,6 @@ export class Toolbar {
 			prio: 1,
 			props: {
 				title: "Fit view",
-				color: "var(--color-orange-300)",
-				class: "border-4",
 				onclick: (_: MouseEvent) => { this.flowHook.fitView({ duration: 200, padding: "8px", nodes: this.selectedNodes }) }
 			},
 		},

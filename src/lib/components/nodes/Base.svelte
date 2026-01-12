@@ -76,7 +76,7 @@ const flow = useSvelteFlow();
 // });
 </script>
 
-<NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-yellow-100)" lineClass="h-8" nodeId={id} />
+<NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-orange-400)" lineClass="h-8" nodeId={id} />
 <div transition:fade bind:this={content} class="size-full flex items-stretch">
     {@render children?.({ref: setRef})}
 </div>
