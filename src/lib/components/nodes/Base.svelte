@@ -45,19 +45,19 @@ onMount(()=>{
 let resizeProps = $state({
     minWidth: Flow.dimensions[type].width,
     minHeight: Flow.dimensions[type].height,
-    maxWidth: Flow.dimensions[type].width*2,
-    maxHeight: Flow.dimensions[type].height*2,
+    maxWidth: Flow.dimensions[type].width*4,
+    maxHeight: Flow.dimensions[type].height*4,
 });
 
 const clamp = (value: number, min: number, max: number) =>
     Math.min(Math.max(value, min), max);
-
+let once = $state(true);
 useResizeObserver(()=>content, ([info])=>{
     if (!content || !info) return;
     resizeProps.minWidth = clamp(info.contentRect.width, content.scrollWidth , resizeProps.maxWidth)+8;
     resizeProps.minHeight = clamp(info.contentRect.height, content.scrollHeight, resizeProps.maxHeight)+8;
-    if (node) {
-        console.log("resize?", node.width, node.height, resizeProps.minWidth, resizeProps.minHeight);
+    if (node && once) { // TODO: just move it onMount?
+        once = false;
         node.width = resizeProps.minWidth;
         node.height = resizeProps.minHeight;
         flow.updateNode(id, node);

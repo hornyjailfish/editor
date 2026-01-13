@@ -10,7 +10,7 @@
 
   let { data } = $props();
   let elk: Elk | null = $state(null);
-  let elkGraph: ElkNode | null = $state(null);
+
   if (browser) {
     elk = new ELK({ workerFactory: ()=>new Worker({ name: new URL('elkjs/lib/elk-worker.min.js', import.meta.url).toString()}) });
   }
