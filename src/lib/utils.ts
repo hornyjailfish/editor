@@ -2,6 +2,7 @@ import * as Custom from "$lib/components/nodes";
 import type { Node, Dimensions, Edge, NodeTypes, XYPosition, NodeProps } from "@xyflow/svelte";
 import type { NodeBase } from "@xyflow/system";
 import type { ElkLayoutAlgorithmDescription, ElkNode, LayoutOptions } from "elkjs/lib/elk-api";
+import { xy2elk } from "./client/utls";
 
 export type NodeDimensions = Dimensions & { position: XYPosition };
 
@@ -63,7 +64,7 @@ export const Flow: FlowOptions = {
 		},
 		breakers: {
 			connectable: true,
-			draggable: false,
+			draggable: true,
 			expandParent: false,
 			extent: "parent",
 		},
@@ -78,25 +79,73 @@ export const Flow: FlowOptions = {
 		electric_rooms: {
 			"elk.algorithm": "rectpacking",
 			"elk.direction": "DOWN",
+			"hierarchyHandling": "INCLUDE_CHILDREN"
 		},
 		boards: {
 			"elk.algorithm": "rectpacking",
 			"elk.direction": "RIGHT",
+			"hierarchyHandling": "INCLUDE_CHILDREN"
 		},
 		breakers: {
 			"elk.algorithm": "layered",
+			"hierarchyHandling": "INCLUDE_CHILDREN"
 		},
 		root_breakers: {
 			"elk.algorithm": "layered",
 			"elk.direction": "DOWN",
+			"hierarchyHandling": "INCLUDE_CHILDREN"
 		},
 	},
 };
 
+export function toNode(item: ActionResult<{}>, parentId_filedName?: string): Node {
+	return {
+		id: item.id.toString(),
+		type: item.id.tb,
+		data: item,
+		parentId: parentId_filedName ? item[parentId_filedName].toString(): undefined,
+		...Flow.dimensions[item.id.tb],
+		...Flow.flowOptions[item.id.tb],
+	}
+}
 
-let nodes: Node[] = [];
-let edges: Edge[] = [];
+export function splitByParent(nodes: Node[]): Record<string, Node[]> {
+	const out: Record<string, Node[]> = {};
+	for (const node of nodes) {
+		if (node.type == undefined) {
+			// TODO: throw?
+			continue;
+		}
+		if (out[node.type] == undefined) {
+			out[node.type] = [];
+		}
+		out[node.type].push(node);
+	}
+	return out;
+}
+
+export function toElk(rooms: Node[], boards: Node[], breakers: Node[]) {
+	const root: ElkNode[] = rooms.map((r: Node)=>{
+		const childs = boards.filter((b: Node)=>b.parentId == r.id).map((board: Node)=>{
+			const childs = breakers.filter((breaker: Node)=>breaker.parentId == board.id).map(xy2elk);
+			const item = xy2elk(board);
+			item.layoutOptions = Flow.layoutOptions[board.type];
+			item.children = childs;
+			return item;
+		});
+		const item = xy2elk(r);
+		item.layoutOptions = Flow.layoutOptions[r.type];
+		item.children = childs;
+		return item;
+	});
+	return {
+		id: 'root',
+		children: root,
+	}
+}
+
 type ElkWithData = ElkNode & Partial<{ type: string, data: any }>
+
 export function elk2flow(elk: ElkWithData, parentId?: string): Node | Node[] {
 	if (!elk.type) {
 		elk.type = "default";

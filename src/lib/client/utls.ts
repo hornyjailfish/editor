@@ -1,3 +1,4 @@
+import { Flow } from "$lib/utils";
 import type { Node } from "@xyflow/svelte";
 import type { ElkNode } from "elkjs/lib/elk-api";
 
@@ -60,7 +61,7 @@ export function flatToNested(items: Node[]) {
 }
 
 // Transform nested array back to flat array with parentId
-function nestedToFlat(nested, parentId = null, result = []) {
+export function nestedToFlat(nested, parentId = null, result = []) {
   for (const item of nested) {
     // Clone item and add parentId
     const flatItem = { ...item, parentId, children: undefined };
@@ -75,7 +76,7 @@ function nestedToFlat(nested, parentId = null, result = []) {
   return result;
 }
 
-export function xy2elk(node: Node) {
+export function xy2elk(node: Node): ElkNode {
 	return {
 		id: node.id,
 		children: [] as ElkNode[],
@@ -83,6 +84,7 @@ export function xy2elk(node: Node) {
 		y: node.position?.y || 0,
 		width: node.measured?.width || node.width,
 		height: node.measured?.height || node.height,
+		layoutOptions: Flow.layoutOptions[node.type]
 	}
 }
 

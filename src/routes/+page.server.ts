@@ -1,23 +1,13 @@
-import { jsonify, Table, type ActionResult, type Prettify, type QueryResult } from 'surrealdb';
+import { jsonify, Table, type Prettify } from 'surrealdb';
 import { error } from '@sveltejs/kit';
-import type { Node, NodeProps } from "@xyflow/svelte";
+import type { Node } from "@xyflow/svelte";
 import type { PageServerLoad } from './$types';
 import { surreal, isConnected } from '$lib/server/surreal';
-import type { Board, BoardFetched, Breaker, ElectricRoom, ElectricRoomFetched } from '$lib/server/schemas';
-import { GraphBase } from '$lib/server/graph/base.svelte';
+import type { Breaker } from '$lib/server/schemas';
 import { fakeElectricRooms, fakeBoards, fakeBreakers } from '$lib/fake_data';
-import { Flow } from '$lib/utils';
+import { toNode, toElk } from '$lib/utils';
 
-function toNode(item: ActionResult<{}>, parentId_filedName?: string): Node {
-	return {
-		id: item.id.toString(),
-		type: item.id.tb,
-		data: item,
-		parentId: parentId_filedName ? item[parentId_filedName].toString(): undefined,
-		...Flow.dimensions[item.id.tb],
-		...Flow.flowOptions[item.id.tb],
-	}
-}
+
 
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -40,7 +30,6 @@ export const load: PageServerLoad = async ({ params }) => {
 		return toNode(r, "board");
 	});
 	const test_data: Node[] = [].concat(rooms, boards, breakers);
-
 	// TODO: validate
 	//
 	return { nodes: jsonify(test_data) };
