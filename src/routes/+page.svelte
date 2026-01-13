@@ -1,33 +1,25 @@
 <script lang="ts">
   import { SvelteFlowProvider } from "@xyflow/svelte";
   import type { ColorMode } from "@xyflow/system";
-  import ELK, { type ElkNode } from "elkjs/lib/elk.bundled.js";
+  import ELK from 'elkjs/lib/elk-api';
+  import { type ELK as Elk } from 'elkjs/lib/elk-api';
+  import Worker from "elkjs/lib/elk-worker?worker";
+  import { browser } from '$app/environment';
 
-  import { elk2flow } from "$lib/utils";
   import Graph from "$lib/components/Graph.svelte";
 
   let { data } = $props();
-  const d = data.nodes;
-  const nodes = $state.raw(data.nodes);
-  const edges = $state.raw(data.edges);
-
-  const elk = new ELK();
-  const layouting = elk.layout(data.elkTree);
-
-  function oninit(e: any) {
-
+  let elk: Elk;
+  if (browser) {
+    elk = new ELK({ workerFactory: ()=>new Worker({ name: new URL('elkjs/lib/elk-worker.min.js', import.meta.url).toString()}) });
   }
+
+  // const layouting = elk.layout(data.elk);
+
 
   let colorMode: ColorMode = $state("system");
 </script>
-{#await layouting}
-  loading...
-  {:then layout}
-    {#await Promise.all(layout!.children!.map((node)=>elk2flow(node as ElkNode & any)).flat())}
-      creating flow...
-    {:then flow}
-      <SvelteFlowProvider>
-        <Graph nodes={flow} {edges} {colorMode} />
-      </SvelteFlowProvider>
-{/await}
-{/await}
+
+<SvelteFlowProvider>
+  <Graph nodes={data.nodes} {colorMode} />
+</SvelteFlowProvider>

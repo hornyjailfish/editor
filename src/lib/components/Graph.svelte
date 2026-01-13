@@ -3,12 +3,13 @@ import { SvelteMap } from "svelte/reactivity";
 import { writable } from "svelte/store";
 
 export const resizer = writable(new SvelteMap<string, boolean>());
+export const client_nodes = writable<Node[]>([]);
+export const client_edges = writable<Edge[]>([]);
 </script>
 
 <script lang="ts">
+import { browser } from '$app/environment';
 import type { ElkExtendedEdge, ElkNode } from 'elkjs/lib/elk-api';
-import ELK from 'elkjs/lib/elk-api';
-import Worker from "elkjs/lib/elk-worker?worker";
 
 import { Uuid } from 'surrealdb';
 import { twMerge } from 'tailwind-merge';
@@ -40,10 +41,9 @@ import Button from '$lib/components/Button.svelte';
 // make sure keys in this table match styles in respective node component
 import { Flow } from '$lib/utils';
 import Toolbar  from './Toolbar.svelte';
-	import { findParent, flatToNested, xy2elk } from "$lib/client/utls";
+import { findParent, flatToNested, xy2elk } from "$lib/client/utls";
 
 let { nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps = $props();
-const elk = new ELK({ workerFactory: ()=>new Worker({ name: new URL('elkjs/lib/elk-worker.min.js', import.meta.url).toString()}) });
 const { fitView } = useSvelteFlow();
 
 async function layout(nodes: Node[],edges: Edge[], options: any) {
@@ -165,8 +165,10 @@ function oninit() {
     {edges}
     {colorMode}
     nodeTypes={Flow.nodeTypes}
+    minZoom={0.1}
     maxZoom={99}
     snapGrid={[5, 5]}
+    nodeDragThreshold={20}
 >
     <Toolbar ready={selectionReady}  />
     <Controls position="top-right"  />

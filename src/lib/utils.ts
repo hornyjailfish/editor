@@ -25,8 +25,8 @@ export const boardDimensions = {
 }
 
 export const breakerDimensions = {
-	width: 16,
-	height: 16,
+	width: 8,
+	height: 8,
 	position: { x: 0, y: 0 },
 }
 
@@ -53,22 +53,25 @@ export const Flow: FlowOptions = {
 		electric_rooms: {
 			connectable: false,
 			deletable: false,
-			expandParent: true,
+			expandParent: false,
 		},
 		boards: {
 			connectable: false,
 			draggable: true,
-			expandParent: true,
+			expandParent: false,
+			extent: "parent",
 		},
 		breakers: {
 			connectable: true,
 			draggable: false,
-			expandParent: true,
+			expandParent: false,
+			extent: "parent",
 		},
 		root_breakers: {
 			connectable: true,
 			draggable: false,
-			expandParent: true,
+			expandParent: false,
+			extent: "parent",
 		},
 	},
 	layoutOptions: {
