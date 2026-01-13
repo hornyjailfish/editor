@@ -17,7 +17,7 @@ type Props = NodeProps<Node> & HTMLAttributes<HTMLDivElement> & {
     zoomOption?: ZoomOption;
 };
 
-let { id, zoomOption, data, type, class: className, children }: Props = $props();
+let { id, zoomOption, data, type, class: className, children, ...rest }: Props = $props();
 
 let selectedNodes = $state<string[]>([]);
 
@@ -84,6 +84,6 @@ const node = flow.getNode(id)
 </script>
 
 <NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-orange-400)" lineClass="h-8" nodeId={id} />
-<div transition:fade bind:this={content} class="size-full flex items-stretch">
+<div transition:fade bind:this={content} class="size-full flex items-stretch" {...rest}>
     {@render children?.({ref: setRef})}
 </div>

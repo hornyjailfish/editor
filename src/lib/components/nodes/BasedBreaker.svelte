@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type Node } from "@xyflow/svelte";
+    import { useSvelteFlow, type Node } from "@xyflow/svelte";
     import type { NodeProps } from "@xyflow/system";
     import type { HTMLAttributes } from "svelte/elements";
 
@@ -15,13 +15,22 @@
         data,
         class: className,
         type,
+        hidden,
         ...rest
     }: Props = $props();
 
     let breaker: HTMLElement | undefined = $state();
+    const { updateNode, getNode, getZoom } = useSvelteFlow();
+    $inspect(getNode(id));
+    $effect(()=>{
+        const zoom = getZoom();
+        const self = getNode(id);
+        self.hidden = !zoom;
+        updateNode(id, self!);
+    });
 </script>
 
-<Base {...rest} class={className} {type} {id} {data}>
+<Base {...rest} {hidden} class={className} {type} {id} {data}>
     {#snippet children()}
         <Breakers {...rest} {type} {data} {id} class="size-full" />
     {/snippet}
