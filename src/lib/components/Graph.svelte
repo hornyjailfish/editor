@@ -45,10 +45,8 @@ const { fitView } = useSvelteFlow();
 async function layout(nodes: Node[],edges: Edge[], options: any) {
     if (!elk) return { nodes, edges }; // TODO: throw?
     const groups = splitByParent(nodes);
-    console.log("groups", groups);
     const [rooms, boards, breakers] = Object.values(groups);
     const base = toElk(rooms, boards, breakers);
-    console.log("base", base);
     const elkGraph = await elk.layout(base, options);
     const flaten: ElkNode[] = nestedToFlat(elkGraph.children);
     const layoutedNodes = nodes.map((node)=>{
@@ -83,7 +81,6 @@ async function onLayout() {
             "elk.hierarchyHandling": "INCLUDE_CHILDREN",
         };
         const withLayout = await layout($state.snapshot(store.current), edges, options);
-        console.log("layouted", withLayout);
         nodes = withLayout.nodes
         edges = withLayout.edges
         fitView();

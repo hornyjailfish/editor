@@ -55,24 +55,28 @@ export const Flow: FlowOptions = {
 			connectable: false,
 			deletable: false,
 			expandParent: false,
+			zIndex: 1,
 		},
 		boards: {
 			connectable: false,
 			draggable: true,
 			expandParent: false,
 			extent: "parent",
+			zIndex: 5,
 		},
 		breakers: {
 			connectable: true,
 			draggable: true,
 			expandParent: false,
 			extent: "parent",
+			zIndex: 9,
 		},
 		root_breakers: {
 			connectable: true,
 			draggable: false,
 			expandParent: false,
 			extent: "parent",
+			zIndex: 9,
 		},
 	},
 	layoutOptions: {
