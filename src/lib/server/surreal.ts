@@ -1,10 +1,11 @@
+import { error } from '@sveltejs/kit';
 import { Surreal } from 'surrealdb';
 
 export const surreal = new Surreal();
 
 export async function isConnected() {
 	try {
-		return await surreal.connect('ws://localhost:8008/rpc', {
+		const isConnected = surreal.connect('ws://localhost:8008/rpc', {
 			database: 'dev',
 			namespace: 'test',
 			auth: {
@@ -12,7 +13,8 @@ export async function isConnected() {
 				password: 'root'
 			}
 		});
+		return await isConnected;
 	} catch (e) {
-		return false;
+		error(500,'db not connected');
 	}
 }

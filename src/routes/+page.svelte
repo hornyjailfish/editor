@@ -5,14 +5,18 @@
 
   import { elk2flow } from "$lib/utils";
   import Graph from "$lib/components/Graph.svelte";
+	import { toast } from "svelte-sonner";
+	import { invalidateAll } from "$app/navigation";
 
   let { data } = $props();
+  $inspect(data);
+  if (data.error != null) setTimeout(()=>{toast.error(data.error, { action: { label: "retry", onClick: invalidateAll }  });}, 1000);
   const d = data.nodes;
   const nodes = $state.raw(data.nodes);
   const edges = $state.raw(data.edges);
 
   const elk = new ELK();
-  const layouting = elk.layout(data.elkTree);
+  const layouting = data.elkTree && elk.layout(data.elkTree);
 
   function oninit(e: any) {
 
@@ -20,14 +24,20 @@
 
   let colorMode: ColorMode = $state("system");
 </script>
-{#await layouting}
-  loading...
-  {:then layout}
+{#if data.error == undefined}
+  {#await layouting}
+    loading...
+    {:then layout}
     {#await Promise.all(layout!.children!.map((node)=>elk2flow(node as ElkNode & any)).flat())}
       creating flow...
-    {:then flow}
+      {:then flow}
       <SvelteFlowProvider>
         <Graph nodes={flow} {edges} {colorMode} />
       </SvelteFlowProvider>
-{/await}
-{/await}
+    {/await}
+  {/await}
+{:else}
+      <SvelteFlowProvider>
+        <Graph nodes={[]} edges={[]} {colorMode} />
+      </SvelteFlowProvider>
+{/if}

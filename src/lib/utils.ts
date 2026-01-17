@@ -3,6 +3,13 @@ import type { Node, Dimensions, Edge, NodeTypes, XYPosition, NodeProps } from "@
 import type { NodeBase } from "@xyflow/system";
 import type { ElkLayoutAlgorithmDescription, ElkNode, LayoutOptions } from "elkjs/lib/elk-api";
 
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
 export type NodeDimensions = Dimensions & { position: XYPosition };
 
 export default {

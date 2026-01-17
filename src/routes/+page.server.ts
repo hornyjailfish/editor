@@ -1,24 +1,36 @@
 import type { PageServerLoad } from './$types';
 import { surreal, isConnected } from '$lib/server/surreal';
 import { jsonify, Table, type Prettify } from 'surrealdb';
-import { error } from '@sveltejs/kit';
-import type { Board, BoardFetched, Breaker, ElectricRoom, ElectricRoomFetched } from '$lib/server/schemas';
+
+import type {
+	Board,
+	BoardFetched,
+	Breaker,
+	ElectricRoom,
+	ElectricRoomFetched
+} from '$lib/server/schemas';
 import { GraphBase } from '$lib/server/graph/base.svelte';
 import type { NodeProps } from '@xyflow/svelte';
-
+import { toast } from 'svelte-sonner';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const graph = new GraphBase();
 	const rootTable = new Table('electric_rooms');
-	const dbReady = await isConnected();
-	if (!dbReady) {
-		error(500, 'db not connected');
+	try {
+		const dbReady = await isConnected();
+	} catch (e: any) {
+		return {
+			error: e.body.message
+		}
 	}
 	await surreal.ready;
-	const [res] = await surreal.query<Prettify<ElectricRoomFetched[]>[]>("select * from $table fetch boards, boards.*.breakers;",{ table: rootTable});
+	const [res] = await surreal.query<Prettify<ElectricRoomFetched[]>[]>(
+		'select * from $table fetch boards, boards.*.breakers;',
+		{ table: rootTable }
+	);
 	// TODO: validate
-	const rooms = res.map((r)=>{
-		const roomNodeOpts: Partial<Omit<NodeProps, "id" | "data" | "type">> = { isConnectable: false };
+	const rooms = res.map((r) => {
+		const roomNodeOpts: Partial<Omit<NodeProps, 'id' | 'data' | 'type'>> = { isConnectable: false };
 		const roomNode = GraphBase.sur2flow<ElectricRoomFetched>(r, roomNodeOpts);
 		graph.addNode(roomNode);
 		const elkRoom = GraphBase.sur2elkN(r);
@@ -26,8 +38,11 @@ export const load: PageServerLoad = async ({ params }) => {
 			return elkRoom;
 		}
 
-		const boards = r.boards.map((board)=>{
-			const boardNodeOpts: Partial<Omit<NodeProps, "id" | "data" | "type">> = { isConnectable: false, draggable: false };
+		const boards = r.boards.map((board) => {
+			const boardNodeOpts: Partial<Omit<NodeProps, 'id' | 'data' | 'type'>> = {
+				isConnectable: false,
+				draggable: false
+			};
 			const boardNode = GraphBase.sur2flow<BoardFetched>(board, boardNodeOpts);
 			GraphBase.setParentId(roomNode, boardNode, true);
 			graph.addNode(boardNode);
@@ -36,8 +51,11 @@ export const load: PageServerLoad = async ({ params }) => {
 				return elkBoard;
 			}
 
-			const breakers = board.breakers.map((breaker)=>{
-				const breakerNodeOpts: Partial<Omit<NodeProps, "id" | "data" | "type">> = { isConnectable: true, draggable: false };
+			const breakers = board.breakers.map((breaker) => {
+				const breakerNodeOpts: Partial<Omit<NodeProps, 'id' | 'data' | 'type'>> = {
+					isConnectable: true,
+					draggable: false
+				};
 				const breakerNode = GraphBase.sur2flow<Breaker>(breaker, breakerNodeOpts);
 				GraphBase.setParentId(boardNode, breakerNode, true);
 				graph.addNode(breakerNode);
@@ -72,5 +90,9 @@ export const load: PageServerLoad = async ({ params }) => {
 	// });
 	// const out = await Promise.all(groups);
 
-	return { nodes: jsonify(graph.nodes), edges: jsonify(graph.edges), elkTree: jsonify(graph.elkRoot) };
+	return {
+		nodes: jsonify(graph.nodes),
+		edges: jsonify(graph.edges),
+		elkTree: jsonify(graph.elkRoot)
+	};
 };
