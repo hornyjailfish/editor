@@ -4,6 +4,7 @@ import { ControlButton, NodeToolbar, Position, type Node, type NodeProps } from 
 import { useOnSelectionChange, useViewport, useSvelteFlow, useInternalNode } from '@xyflow/svelte';
 
 import type { ElectricRoom } from '$lib/server/schemas';
+	import { twMerge } from 'tailwind-merge';
 
 type Props = {
     data?: ElectricRoom,
@@ -33,9 +34,9 @@ let zoom = $derived(viewport.current.zoom > 1);
 const childs = flow.getNodes().filter(n=>n.parentId == id);
 
 $effect(()=>{
-    childs.forEach(n=>{
-	flow.updateNode(n.id,(n)=>{return {hidden: !zoom}})
-    });
+	//    childs.forEach(n=>{
+	// flow.updateNode(n.id,(n)=>{return {hidden: !zoom}})
+	//    });
 });
 const onfocus = (e: FocusEvent &{ currentTarget: EventTarget & HTMLInputElement})=>e.currentTarget.select()
 
@@ -45,13 +46,14 @@ let clientNodes: Node[] = [];
 function addBoard(event: MouseEvent & { currentTarget: EventTarget & HTMLButtonElement; }) {
 
 }
+const hide = $derived(!zoom?"":"hidden");
 </script>
 
 <div {ondblclick} bind:this={content} transition:fade class="room size-full" role="list">
-    {#if !zoom}
 	<div class="flex flex-row text-center justify-center items-center w-full h-full">
-	    <p class="font-bold text-5xl text-slate-400/20">{name}</p>
+	    <p class={twMerge("font-bold text-5xl text-slate-400/20", hide)}>{name}</p>
 	</div>
+    {#if !zoom}
     {:else}
 	<NodeToolbar class="text-slate-500 h-full"  position={Position.Right} align="start" nodeId={id}>
 	    <div class="flex flex-col gap-1 *:rounded-lg" transition:fade>

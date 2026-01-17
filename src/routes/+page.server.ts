@@ -1,6 +1,5 @@
-import type { PageServerLoad } from './$types';
-import { surreal, isConnected } from '$lib/server/surreal';
 import { jsonify, Table, type Prettify } from 'surrealdb';
+<<<<<<< HEAD
 
 import type {
 	Board,
@@ -66,9 +65,42 @@ export const load: PageServerLoad = async ({ params }) => {
 		});
 		GraphBase.addElkChildren(boards, elkRoom);
 		return elkRoom;
+=======
+import { error } from '@sveltejs/kit';
+import type { Node } from "@xyflow/svelte";
+import type { PageServerLoad } from './$types';
+import { surreal, isConnected } from '$lib/server/surreal';
+import type { Breaker } from '$lib/server/schemas';
+import { fakeElectricRooms, fakeBoards, fakeBreakers } from '$lib/fake_data';
+import { toNode, toElk } from '$lib/utils';
+
+
+
+
+export const load: PageServerLoad = async ({ params }) => {
+	const rootTable = new Table("breakers");
+	const dbReady = await isConnected();
+	if (!dbReady) {
+		error(500, 'db not connected');
+	}
+	await surreal.ready;
+	const res = await surreal.select<Prettify<Breaker>>(rootTable);
+	console.log(res);
+
+	const rooms = fakeElectricRooms.map(r=>{
+		return toNode(r);
+>>>>>>> rewrite/db
 	});
-	GraphBase.addElkChildren(rooms, graph.elkRoot);
+	const boards = fakeBoards.map(r=>{
+		return toNode(r, "room");
+	});
+	const breakers = fakeBreakers.map(r=>{
+		return toNode(r, "board");
+	});
+	const test_data: Node[] = [].concat(rooms, boards, breakers);
+	// TODO: validate
 	//
+<<<<<<< HEAD
 	// const groups = res.map(async (r) => {
 	// 	const roomNode = graph.sur2flow<ElectricRoom>(r)
 	// 	graph.addNode(roomNode);
@@ -95,4 +127,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		edges: jsonify(graph.edges),
 		elkTree: jsonify(graph.elkRoot)
 	};
+=======
+	return { nodes: jsonify(test_data) };
+>>>>>>> rewrite/db
 };

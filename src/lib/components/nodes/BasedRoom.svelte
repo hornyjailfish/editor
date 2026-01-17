@@ -19,9 +19,11 @@
     }: Props = $props();
 
     let room: HTMLElement | undefined = $state();
+
+
 </script>
 
-<Base {...rest} class={className} {type} {id} {data}>
+<Base   {...rest} class={className} {type} {id} {data}>
     {#snippet children()}
         <Room {...rest} {type} {data} {id} class="size-full" />
     {/snippet}

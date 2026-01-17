@@ -3,19 +3,18 @@ import { SvelteMap } from "svelte/reactivity";
 import { writable } from "svelte/store";
 
 export const resizer = writable(new SvelteMap<string, boolean>());
+export const client_nodes = writable<Node[]>([]);
+export const client_edges = writable<Edge[]>([]);
 </script>
 
 <script lang="ts">
-import type { ElkExtendedEdge, ElkNode } from 'elkjs/lib/elk-api';
-import ELK from 'elkjs/lib/elk-api';
-import Worker from "elkjs/lib/elk-worker?worker";
+import type { ELK, ElkExtendedEdge, ElkNode } from 'elkjs/lib/elk-api';
 
 import { Uuid } from 'surrealdb';
 import { twMerge } from 'tailwind-merge';
 import { error } from '@sveltejs/kit';
 import {
     useSvelteFlow,
-    useStore,
     useNodes,
     type OnConnectEnd,
     SvelteFlow,
@@ -28,9 +27,6 @@ import {
     type Edge,
     type ColorMode,
     useOnSelectionChange,
-    NodeToolbar,
-    Position,
-    ControlButton,
 } from '@xyflow/svelte';
 import Button from '$lib/components/Button.svelte';
 
@@ -38,37 +34,30 @@ import Button from '$lib/components/Button.svelte';
 // each node wrapper has class "svelte-flow__node-{type}"
 // where "type" is key from this table
 // make sure keys in this table match styles in respective node component
-import { Flow } from '$lib/utils';
-import Toolbar  from './Toolbar.svelte';
-	import { findParent, flatToNested, xy2elk } from "$lib/client/utls";
 
-let { nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps = $props();
-const elk = new ELK({ workerFactory: ()=>new Worker({ name: new URL('elkjs/lib/elk-worker.min.js', import.meta.url).toString()}) });
+import { Flow, splitByParent, toElk } from '$lib/utils';
+import Toolbar  from './Toolbar.svelte';
+import { nestedToFlat } from "$lib/client/utls";
+
+let { elk, nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps & { elk: ELK } = $props();
 const { fitView } = useSvelteFlow();
 
 async function layout(nodes: Node[],edges: Edge[], options: any) {
     if (!elk) return { nodes, edges }; // TODO: throw?
-    const nested = flatToNested(nodes);
-    const graph = {
-        id: 'root',
-        children: nested,
-        // edges: edges.map((edge)=>({
-        //     id: edge.id,
-        //     source: edge.source,
-        //     target: edge.target,
-        // })) as ElkExtendedEdge[],
-        edges: edges as unknown as ElkExtendedEdge[] // TODO: handle edges
-    };
-    const elkGraph = await elk.layout(graph, options);
-    // console.log("elkGraph", elkGraph);
+    const groups = splitByParent(nodes);
+    const [rooms, boards, breakers] = Object.values(groups);
+    const base = toElk(rooms, boards, breakers);
+    const elkGraph = await elk.layout(base, options);
+    const flaten: ElkNode[] = nestedToFlat(elkGraph.children);
     const layoutedNodes = nodes.map((node)=>{
         let elkNode
         // INFO: there are only 3 nested levels right now Room-->Board-->Breaker
         // if it changes should rewrite it to maps/sets for better performance
-        elkNode = elkGraph?.children?.find(n=>n.id === node.id );
+        elkNode = flaten.find(n=>n.id === node.id );
         if (!elkNode) {
+            console.log("node not found:", node.id);
+            return node;
         }
-        if (!elkNode) return node;
         return {
             ...node,
             position: {
@@ -81,17 +70,17 @@ async function layout(nodes: Node[],edges: Edge[], options: any) {
     });
     return { nodes: layoutedNodes, edges };
 }
-
+const store = useNodes();
 async function onLayout() {
     try {
         let options = {
             "elk.algorithm": "layered",
             "elk.direction": "RIGHT",
-            // "elk.layered.spacing.nodeNodeBetweenLayers": defaultSize.width/8,
-            // "elk.spacing.nodeNode": defaultSize.width/8,
+            "elk.spacing.nodeNode": "8",
+            "elk.padding": "4",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
         };
-        const withLayout = await layout(nodes, edges, options);
-        console.log("layouted", withLayout);
+        const withLayout = await layout($state.snapshot(store.current), edges, options);
         nodes = withLayout.nodes
         edges = withLayout.edges
         fitView();
@@ -155,6 +144,7 @@ function oninit() {
 </script>
 
 <SvelteFlow
+    onresize={(e)=>{console.log("load", e)}}
     proOptions={{hideAttribution: true}}
     {oninit}
     onselectionend={(e)=>{selectionReady = true}}
@@ -165,8 +155,10 @@ function oninit() {
     {edges}
     {colorMode}
     nodeTypes={Flow.nodeTypes}
+    minZoom={0.1}
     maxZoom={99}
     snapGrid={[5, 5]}
+    nodeDragThreshold={20}
 >
     <Toolbar ready={selectionReady}  />
     <Controls position="top-right"  />

@@ -5,12 +5,13 @@ import type { Snippet } from "svelte";
 import { DeleteButton, FitViewButton, } from "$lib/client/snippets.svelte";
 import { SvelteMap } from "svelte/reactivity";
 
-export interface Controls  {
+export interface Controls {
 	type: string,
 	item: Snippet<[ControlButtonProps]>,
 	prio?: number, // l2r order of controls default: 5
 	props?: ControlButtonProps | any,
-	condition?: () => boolean, update?: (nodes: Node[]) => void
+	condition?: () => boolean,
+	update?: (nodes: Node[]) => void
 }
 
 export class Toolbar {
@@ -28,7 +29,7 @@ export class Toolbar {
 
 	update(nodes: Node[], edges: Edge[]) {
 		this.selectedNodes = nodes;
-		this.availableControls.forEach((c) => { if (c.update) c?.update(nodes) }); // TODO: temporary
+		this.availableControls.forEach((c) => { if (c.update) c.update(nodes) }); // TODO: temporary
 	}
 
 	addControl(control: Controls) {
@@ -70,6 +71,9 @@ export class Toolbar {
 		}
 	];
 
-	availableControls: Controls[] = $derived.by(() => this.controls.values().filter(c => c.condition?.() ?? true).toArray());
+	availableControls: Controls[] = $derived.by(() => {
+		const controls = this.controls.values();
+		return controls.filter(c => c.condition?.() ?? true).toArray()
+	});
 
 }
