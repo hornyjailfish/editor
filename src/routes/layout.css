@@ -5,9 +5,6 @@
 @plugin '@tailwindcss/forms';
 @plugin "@iconify/tailwind4";
 
-
-
-
 @custom-variant dark (&:is(.dark *));
 
 :root {
