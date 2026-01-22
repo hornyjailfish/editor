@@ -19,18 +19,9 @@
         ...rest
     }: Props = $props();
 
-    let breaker: HTMLElement | undefined = $state();
-    const { updateNode, getNode, getZoom } = useSvelteFlow();
-    $inspect(getNode(id));
-    $effect(()=>{
-        const zoom = getZoom();
-        const self = getNode(id);
-        self.hidden = !zoom;
-        updateNode(id, self!);
-    });
 </script>
 
-<Base {...rest} {hidden} class={className} {type} {id} {data}>
+<Base {...rest} class={className} {type} {id} {data}>
     {#snippet children()}
         <Breakers {...rest} {type} {data} {id} class="size-full" />
     {/snippet}
