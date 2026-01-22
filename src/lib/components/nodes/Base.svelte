@@ -66,21 +66,6 @@ useResizeObserver(()=>content, ([info])=>{
 
 const flow = useSvelteFlow();
 const node = flow.getNode(id)
-
-// const resizeControlProps = $derived.by<ControlButtonProps>(()=>{
-//     if (resizeable) {
-// 	return {
-// 	    title: "Disable resizing",
-// 	    color: "var(--color-orange-500)",
-// 	    bgColorHover: "var(--color-orange-500)",
-// 	    borderColor: "var(--color-orange-500)",
-// 	    style: "border: 1px solid var(--color-orange-600)",
-// 	};
-//     }
-//     return {
-// 	title: "Enable resizing",
-//     };
-// });
 </script>
 
 <NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-orange-400)" lineClass="h-8" nodeId={id} />

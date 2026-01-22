@@ -1,6 +1,6 @@
 <script module>
 import { SvelteMap } from "svelte/reactivity";
-import { writable } from "svelte/store";
+import { fromStore, writable } from "svelte/store";
 
 export const resizer = writable(new SvelteMap<string, boolean>());
 export const client_nodes = writable<Node[]>([]);
@@ -15,7 +15,10 @@ import { twMerge } from 'tailwind-merge';
 import { error } from '@sveltejs/kit';
 import {
     useSvelteFlow,
+    useStore,
     useNodes,
+    useNodesInitialized,
+    useInternalNode,
     type OnConnectEnd,
     SvelteFlow,
     Panel,
@@ -28,22 +31,45 @@ import {
     type ColorMode,
     useOnSelectionChange,
 } from '@xyflow/svelte';
+import { toast } from "svelte-sonner";
 import Button from '$lib/components/Button.svelte';
 
 // INFO: custom node types use global css class for styling
 // each node wrapper has class "svelte-flow__node-{type}"
 // where "type" is key from this table
-// make sure keys in this table match styles in respective node component
+// make sure keys in utls match styles in respective node component
 
 import { Flow, splitByParent, toElk } from '$lib/utils';
 import Toolbar  from './Toolbar.svelte';
 import { nestedToFlat } from "$lib/client/utls";
+	import { tick } from "svelte";
 
-let { elk, nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps & { elk: ELK } = $props();
-const { fitView } = useSvelteFlow();
+let { elk, nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps & { elk: ELK | null } = $props();
 
-async function layout(nodes: Node[],edges: Edge[], options: any) {
-    if (!elk) return { nodes, edges }; // TODO: throw?
+const { nodeLookup } = useStore();
+const nodesInitialized = $derived(useNodesInitialized().current);
+let dbNodes: Node[] = $state.raw(nodes);
+const { fitView, getZoom, getNodes, updateNode } = useSvelteFlow();
+
+const boards = dbNodes.filter(n=>n.type == "breakers");
+const zoom = $derived.by(getZoom);
+const isHidden = $derived(zoom<0.8);
+
+
+$effect(()=>{
+    boards.forEach(n=>{
+        n.hidden = isHidden;
+        updateNode(n.id,{ hidden: isHidden });
+    });
+});
+
+async function layout(nodes: Node[],edges: Edge[], options: any): Promise<{nodes: Node[], edges: Edge[]}> {
+    if (!elk) {
+        toast.error("elk not initialized");
+        console.error("elk not initialized");
+        return { nodes, edges }; // TODO: throw?
+    }
+    if(!nodesInitialized) return { nodes, edges };
     const groups = splitByParent(nodes);
     const [rooms, boards, breakers] = Object.values(groups);
     const base = toElk(rooms, boards, breakers);
@@ -71,6 +97,7 @@ async function layout(nodes: Node[],edges: Edge[], options: any) {
     return { nodes: layoutedNodes, edges };
 }
 const store = useNodes();
+
 async function onLayout() {
     try {
         let options = {
@@ -78,10 +105,10 @@ async function onLayout() {
             "elk.direction": "RIGHT",
             "elk.spacing.nodeNode": "8",
             "elk.padding": "4",
-            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            // "elk.hierarchyHandling": "INCLUDE_CHILDREN",
         };
-        const withLayout = await layout($state.snapshot(store.current), edges, options);
-        nodes = withLayout.nodes
+        const withLayout = await layout(dbNodes, edges, options);
+        dbNodes = withLayout.nodes
         edges = withLayout.edges
         fitView();
     } catch (e: any) {
@@ -102,7 +129,7 @@ const onconnectend: OnConnectEnd = (event, state) => {
 async function testRoom() {
     const id = Uuid.v4().toString();
     console.log("add room", id);
-    nodes.push({
+    $client_nodes.push({
         id,
         type: 'electric_rooms',
         data: { id, name: 'щ 69' },
@@ -137,21 +164,33 @@ useOnSelectionChange(({nodes})=>{
 });
 
 let selectionReady = $state(true);
-function oninit() {
-    nodes.forEach(n=>$resizer.set(n.id, false));
+async function oninit() {
+    console.log("oninit");
+    tick().then(()=>{
+        console.log("tick");
+        console.log(nodesInitialized);
+    });
+    dbNodes.forEach(n=>$resizer.set(n.id, false));
+    console.log("init",nodesInitialized);
+    onLayout();
 }
 
+let appNodes: Node[] = $derived.by(()=>[...$client_nodes, ...nodes]);
+function onflowerror(e: any) {
+    console.error(e);
+    toast.error("Flow error: "+e.message);
+}
 </script>
 
 <SvelteFlow
-    onresize={(e)=>{console.log("load", e)}}
     proOptions={{hideAttribution: true}}
     {oninit}
+    {onflowerror}
     onselectionend={(e)=>{selectionReady = true}}
     onselectionstart={(e)=>{selectionReady = false}}
     selectionOnDrag
     panOnDrag={[1]}
-    {nodes}
+    nodes={dbNodes}
     {edges}
     {colorMode}
     nodeTypes={Flow.nodeTypes}

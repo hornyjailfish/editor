@@ -1,6 +1,6 @@
 <script lang="ts">
 import { fade } from 'svelte/transition';
-import { ControlButton, NodeToolbar, Position, type Node, type NodeProps } from '@xyflow/svelte';
+import { ControlButton, NodeToolbar, Position, useSvelteFlow, type Node, type NodeProps } from '@xyflow/svelte';
 import type { Board } from '$lib/server/schemas';
 
 
@@ -11,6 +11,8 @@ type Props = {
 
 let node: HTMLDivElement | undefined = $state();
 
+const { getZoom } = useSvelteFlow();
+const zoom = $derived.by(getZoom);
 
 
 let { id, data, class: className, ...rest }: Props = $props();
@@ -20,7 +22,9 @@ id = id || data?.id.toString();
 </script>
 
 <div bind:this={node} class="size-full flex items-stretch">
-    <p class="size-full text-stone-300 content-center text-[10px]">{data?.name}</p>
+    {#if zoom<0.8}
+	<p class="size-full text-stone-300 content-center text-[1em]">{data?.name}</p>
+    {/if}
     <NodeToolbar class="text-slate-500 h-full"  position={Position.Right} align="start" nodeId={id}>
 	<div class="flex flex-col gap-1 *:rounded-lg" transition:fade>
 	    <ControlButton   title="Add board" onclick={()=>console.log("click")}>
@@ -28,7 +32,7 @@ id = id || data?.id.toString();
 	    </ControlButton>
 	</div>
     </NodeToolbar>
-    <NodeToolbar class="text-slate-500" offset={-4}  position={Position.Top} align="center" nodeId={id}>
+    <NodeToolbar isVisible={zoom>0.8} class="text-slate-500 text-lg" offset={-4}  position={Position.Top} align="center" nodeId={id}>
 	{data?.name}
     </NodeToolbar>
 </div>

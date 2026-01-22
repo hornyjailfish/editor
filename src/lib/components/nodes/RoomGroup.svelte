@@ -31,12 +31,8 @@ function ondblclick(e: MouseEvent) {
 }
 
 let zoom = $derived(viewport.current.zoom > 1);
-const childs = flow.getNodes().filter(n=>n.parentId == id);
 
 $effect(()=>{
-	//    childs.forEach(n=>{
-	// flow.updateNode(n.id,(n)=>{return {hidden: !zoom}})
-	//    });
 });
 const onfocus = (e: FocusEvent &{ currentTarget: EventTarget & HTMLInputElement})=>e.currentTarget.select()
 
