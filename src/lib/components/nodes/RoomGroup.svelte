@@ -10,6 +10,7 @@ type Props = {
     data?: ElectricRoom,
     class?: string
 } & NodeProps<Node<ElectricRoom>>
+
 let { id, data, class: className, type, ...rest }: Props = $props();
 
 let content: HTMLDivElement | undefined = $state();
@@ -49,8 +50,7 @@ const hide = $derived(!zoom?"":"hidden");
 	<div class="flex flex-row text-center justify-center items-center w-full h-full">
 	    <p class={twMerge("font-bold text-5xl text-slate-400/20", hide)}>{name}</p>
 	</div>
-    {#if !zoom}
-    {:else}
+    {#if zoom}
 	<NodeToolbar class="text-slate-500 h-full"  position={Position.Right} align="start" nodeId={id}>
 	    <div class="flex flex-col gap-1 *:rounded-lg" transition:fade>
 		<ControlButton title="Add board" onclick={addBoard}>

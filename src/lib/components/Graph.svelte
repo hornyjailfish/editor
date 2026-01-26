@@ -42,11 +42,9 @@ import Button from '$lib/components/Button.svelte';
 import { Flow, splitByParent, toElk } from '$lib/utils';
 import Toolbar  from './Toolbar.svelte';
 import { nestedToFlat } from "$lib/client/utls";
-	import { tick } from "svelte";
 
 let { elk, nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps & { elk: ELK | null } = $props();
 
-const { nodeLookup } = useStore();
 const nodesInitialized = $derived(useNodesInitialized().current);
 let dbNodes: Node[] = $state.raw(nodes);
 const { fitView, getZoom, getNodes, updateNode } = useSvelteFlow();
@@ -69,13 +67,18 @@ async function layout(nodes: Node[],edges: Edge[], options: any): Promise<{nodes
         console.error("elk not initialized");
         return { nodes, edges }; // TODO: throw?
     }
-    if(!nodesInitialized) return { nodes, edges };
-    const groups = splitByParent(nodes);
+    if(nodesInitialized == false) {
+        toast.error("nodes not initialized");
+        console.error("nodes not initialized");
+        return { nodes, edges };
+    }
+    console.log("layout", nodes[0].measured);
+    const groups = splitByParent(dbNodes);
     const [rooms, boards, breakers] = Object.values(groups);
     const base = toElk(rooms, boards, breakers);
     const elkGraph = await elk.layout(base, options);
     const flaten: ElkNode[] = nestedToFlat(elkGraph.children);
-    const layoutedNodes = nodes.map((node)=>{
+    const layoutedNodes = dbNodes.map((node)=>{
         let elkNode
         // INFO: there are only 3 nested levels right now Room-->Board-->Breaker
         // if it changes should rewrite it to maps/sets for better performance
@@ -107,16 +110,26 @@ async function onLayout() {
             "elk.padding": "4",
             // "elk.hierarchyHandling": "INCLUDE_CHILDREN",
         };
-        const withLayout = await layout(dbNodes, edges, options);
-        dbNodes = withLayout.nodes
-        edges = withLayout.edges
+
+        // const withLayout = await layout(dbNodes, edges, options);
+        // dbNodes = withLayout.nodes
+        // edges = withLayout.edges
+
         fitView();
     } catch (e: any) {
-        error(400, e.message);
+        toast.error(e.message);
     }
 }
 
-const { screenToFlowPosition } = useSvelteFlow();
+let once = true;
+$effect.pre(() => {
+    if(useNodesInitialized().current && once) {
+        // onLayout();
+        once = false;
+    }
+});
+
+const { screenToFlowPosition, getNode } = useSvelteFlow();
 
 const onconnectend: OnConnectEnd = (event, state) => {
     if (state.isValid)  return;
@@ -165,21 +178,17 @@ useOnSelectionChange(({nodes})=>{
 
 let selectionReady = $state(true);
 async function oninit() {
-    console.log("oninit");
-    tick().then(()=>{
-        console.log("tick");
-        console.log(nodesInitialized);
-    });
     dbNodes.forEach(n=>$resizer.set(n.id, false));
-    console.log("init",nodesInitialized);
-    onLayout();
+    // onLayout();
 }
 
 let appNodes: Node[] = $derived.by(()=>[...$client_nodes, ...nodes]);
+
 function onflowerror(e: any) {
     console.error(e);
     toast.error("Flow error: "+e.message);
 }
+
 </script>
 
 <SvelteFlow

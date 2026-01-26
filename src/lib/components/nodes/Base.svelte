@@ -2,8 +2,8 @@
 import { onMount, type Snippet } from "svelte";
 import type { HTMLAttributes } from "svelte/elements";
 import { fade } from "svelte/transition";
-import { useResizeObserver } from "runed";
-import {  NodeResizer, useOnSelectionChange, useSvelteFlow, type Node } from "@xyflow/svelte";
+import { useResizeObserver, watch } from "runed";
+import {  NodeResizer, useNodesInitialized, useOnSelectionChange, useSvelteFlow, type Node } from "@xyflow/svelte";
 import type { NodeProps } from "@xyflow/system";
 import { Flow } from "$lib/utils";
 
@@ -52,20 +52,25 @@ let resizeProps = $state({
 const clamp = (value: number, min: number, max: number) =>
     Math.min(Math.max(value, min), max);
 let once = $state(true);
+
+const ready = $derived(useNodesInitialized().current);
+
 useResizeObserver(()=>content, ([info])=>{
     if (!content || !info) return;
     resizeProps.minWidth = clamp(info.contentRect.width, content.scrollWidth , resizeProps.maxWidth)+8;
     resizeProps.minHeight = clamp(info.contentRect.height, content.scrollHeight, resizeProps.maxHeight)+8;
+        node.width = info.contentRect.width<resizeProps.maxWidth?info.contentRect.width:resizeProps.maxWidth
+        node.height = info.contentRect.height<resizeProps.maxHeight?info.contentRect.height:resizeProps.maxHeight
     if (node && once) { // TODO: just move it onMount?
         once = false;
-        node.width = resizeProps.minWidth;
-        node.height = resizeProps.minHeight;
+        node.width = content.scrollWidth
+        node.height = content.scrollHeight
         flow.updateNode(id, node);
     }
 });
-
 const flow = useSvelteFlow();
 const node = flow.getNode(id)
+
 </script>
 
 <NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-orange-400)" lineClass="h-8" nodeId={id} />

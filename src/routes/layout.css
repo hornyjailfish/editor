@@ -6,7 +6,7 @@
 @plugin "@iconify/tailwind4";
 
 @custom-variant dark (&:is(.dark *));
-
+@media (prefers-color-scheme: dark) {
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -75,7 +75,7 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.553 0.013 58.071);
 }
-
+}
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -126,7 +126,7 @@
 .svelte-flow {
     --xy-background-color-default: var(--color-stone-100);
     --xy-node-color-default: var(--color-stone-300);
-    --xy-node-border-radius-default: 2px;
+    --xy-node-border-radius-default: 0px;
     --xy-node-border-default: 1px solid var(--color-slate-300);
 /*    --xy-node-background-color-default: var(--color-slate-200);*/
     --xy-node-group-background-color-default: --alpha(var(--color-stone-400)/10%);
@@ -140,6 +140,7 @@
 .svelte-flow.dark {
     --xy-background-color-default: var(--color-neutral-800);
     --xy-node-color-default: var(--color-stone-800);
+    --xy-node-border-radius-default: 0px;
     --xy-node-border-default: 1px solid var(--color-stone-800);
 /*    --xy-node-background-color-default: var(--color-slate-600);*/
 /*    --xy-node-group-background-color-default: rgba(240, 240, 240, 0.25);*/
@@ -160,7 +161,6 @@
 }
 
 .svelte-flow__node {
-    border-radius: 8px;
     border: 1px solid var(--color-stone-400);
 }
 .svelte-flow__node.selectable {
