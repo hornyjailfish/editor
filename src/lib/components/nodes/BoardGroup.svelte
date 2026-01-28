@@ -31,8 +31,6 @@ id = id || data?.id.toString();
     <NodeToolbar class="text-slate-500" offset={-4}  position={Position.Top} align="center" nodeId={id}>
 	{data?.name}
     </NodeToolbar>
-    <NodeToolbar class="text-slate-500" offset={-5}  position={Position.Bottom} align="start" nodeId={id}>
-    </NodeToolbar>
 </div>
 
 <style>
@@ -41,9 +39,17 @@ padding: 4px;
 border-radius: 2px;
 width: "auto";
 color: var(--color-stone-200, var(--xy-node-color-default));
-background-color: --alpha(var(--color-stone-700, var(--xy-node-background-color-default))/70%);
+background-color: --alpha(var(--color-stone-700, var(--xy-node-background-color-default))/40%);
 text-align: center;
 border: var(--xy-node-border, var(--xy-node-border-default));
+}
+
+:global(.svelte-flow__node-boards.selected) {
+    border: 1px solid var(--color-emerald-500);
+}
+
+:global(.svelte-flow__node-boards.selected:hover) {
+    border: 1px solid var(--color-emerald-300);
 }
 
 :global(.svelte-flow__node-boards.selectable:hover) {

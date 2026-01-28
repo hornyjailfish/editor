@@ -10,9 +10,13 @@ export { DumbButton, Selectable, Lock, ResizeButton, FitViewButton, DeleteButton
     </ControlButton>
 {/snippet}
 
-{#snippet ResizeButton(props: ControlButtonProps & { active?: boolean } = {active: false})}
+{#snippet ResizeButton(props: ControlButtonProps & { active?: boolean })}
     <ControlButton {...props} type="button">
-        <span class="icon-[material-symbols--resize-rounded]"></span>
+        {#if props.active}
+            <span class="icon-[solar--text-selection-bold-duotone]"></span>
+        {:else}
+            <span class="icon-[material-symbols--resize-rounded]"></span>
+        {/if}
     </ControlButton>
 {/snippet}
 

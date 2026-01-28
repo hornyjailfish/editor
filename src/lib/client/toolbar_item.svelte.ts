@@ -174,6 +174,7 @@ export class ResizeControl extends SelectedNodesControl {
 	}
 	onStateChange = (cur?: DuoState, _pre?: DuoState) =>{
 		if (cur == undefined) return
+		this.props.active = cur
 		this.props.title = cur?"Disable resizing": "Enable resizing"
 		this.props.color = cur?"var(--color-orange-500)":undefined
 		this.props.bgColorHover = cur?"var(--color-orange-500)":undefined
