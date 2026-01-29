@@ -7,19 +7,17 @@ import { toNode } from '$lib/utils';
 import type { PageServerData, PageServerLoad } from './$types';
 
 
-
-
 export const load: PageServerLoad = async ({ params }): Promise<PageServerData> => {
-	const rootTable = new Table("breakers");
-	try {
-		const dbReady = await isConnected();
-	}
-	catch (e: any) {
-		return { error: e.body.message, nodes: [] };
-	}
-
-	await surreal.ready;
-	const res = await surreal.select<Prettify<Breaker>>(rootTable);
+	// const rootTable = new Table("breakers");
+	// try {
+	// 	const dbReady = await isConnected();
+	// }
+	// catch (e: any) {
+	// 	return { error: e.body.message, nodes: [] };
+	// }
+	//
+	// await surreal.ready;
+	// const res = await surreal.select<Prettify<Breaker>>(rootTable);
 
 	const rooms = fakeElectricRooms.map(r=>{
 		return toNode(r);

@@ -18,7 +18,7 @@ export type ElectricRoom =  {
 }
 
 export type Board =  {
-	id: RecordId<"boards">;
+	id?: RecordId<"boards">;
 	name: string;
 	room: RecordId<"electric_rooms">;
 }

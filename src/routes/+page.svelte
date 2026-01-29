@@ -6,18 +6,20 @@
   import Worker from "elkjs/lib/elk-worker?worker";
   import { toast } from "svelte-sonner";
   import { browser } from '$app/environment';
-  import { invalidateAll } from "$app/navigation";
 
   import Graph from "$lib/components/Graph.svelte";
 
   let { data } = $props();
-  if (data.error != null) setTimeout(()=>{toast.error(data.error, { action: { label: "retry", onClick: invalidateAll }  });}, 1000);
+  if (data.error != null) setTimeout(()=>{toast.error(data.error, { });}, 100);
+  // if (data.error != null) setTimeout(()=>{toast.error(data.error, { action: { label: "retry", onClick: invalidateAll }  });}, 1000);
 
+  // INFO: svelte files run both on server and client
   let elk: Elk | null = $state(null);
   if (browser) {
     elk = new ELK({ workerFactory: ()=>new Worker({ name: new URL('elkjs/lib/elk-worker.min.js', import.meta.url).toString()}) });
   }
 
+  // INFO: use mode-watcher to resolve system color on startup
   let colorMode: ColorMode = $state("system");
   $effect(() => {
     if (colorMode !== 'system') {
@@ -40,7 +42,7 @@
 </script>
 
 <SvelteFlowProvider >
-  {#if data.error == null}
+  <!-- {#if data.error == null} -->
     <Graph {elk} nodes={data.nodes} bind:colorMode />
-  {/if}
+  <!-- {/if} -->
 </SvelteFlowProvider>
