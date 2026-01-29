@@ -3,17 +3,17 @@ export type Props = NodeProps<Node<ElectricRoom>> & HTMLAttributes<HTMLDivElemen
 </script>
 
 <script lang="ts">
-import { onMount } from "svelte";
+import { onMount, untrack } from "svelte";
 import type { HTMLAttributes } from "svelte/elements";
 import { fade } from "svelte/transition";
 import { useResizeObserver } from "runed";
-import { ControlButton, NodeResizer, NodeToolbar, Position, useOnSelectionChange, useSvelteFlow, type Node } from "@xyflow/svelte";
+import { NodeResizer, NodeToolbar, Position, useOnSelectionChange, useSvelteFlow, type Node } from "@xyflow/svelte";
 import type { NodeProps } from "@xyflow/system";
 
 import { resizer } from "$lib/components/Graph.svelte";
 import { Flow } from "$lib/utils";
 import type { ElectricRoom } from "$lib/server/schemas";
-	import EditToolbar from "./EditToolbar.svelte";
+import EditToolbar from "./EditToolbar.svelte";
 
 
 let { id, data, type, class: className, children, width, height, ...rest }: Props = $props();
@@ -24,7 +24,6 @@ let editName = $state(false);
 let name = $state(data?.name);
 
 onMount(()=>{
-    $inspect(id, width, height);
     return () => {
         $resizer.set(id, false);
     }
@@ -66,28 +65,48 @@ let zoom = $derived(flow.getZoom() > 1);
 
 function ondblclick(e: MouseEvent) {
     e.stopPropagation();
+    const node = flow.getNode(id)
     if (!node) return;
-    flow.fitBounds(flow.getNodesBounds([node]),{ padding: .1 });
+    if (node.selectable) {
+        flow.fitBounds(flow.getNodesBounds([node]),{ padding: .15 });
+    }
+    else {
+        flow.updateNode(id, { selectable: true, selected: true });
+    }
 }
+let roomNameInput: HTMLInputElement | null = $state(null);
+$effect(()=>{
+    if (editName == true) {
+        untrack(()=>{
+            roomNameInput?.focus({ preventScroll: true });
+        });
+    }
+});
 const onfocus = (e: FocusEvent &{ currentTarget: EventTarget & HTMLInputElement})=>e.currentTarget.select()
 const s = $derived((height*flow.getZoom()).toFixed());
-$inspect(s)
+
+function onblur(e: FocusEvent) {
+    e.stopPropagation();
+    editName=false
+}
+
 </script>
 
 <div {ondblclick} transition:fade bind:this={content} class="size-full flex items-stretch" {...rest}>
     <NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-orange-400)" lineClass="h-8" nodeId={id} />
+    {name}
 </div>
 <!-- {#if zoom} -->
-    <EditToolbar isVisible={selected && zoom}  {id} size={s.toString()+"px"} />
-    <NodeToolbar class="text-slate-500" offset={-4}  position={Position.Top} align="center" nodeId={id}>
+    <EditToolbar isVisible={selected && zoom} bind:editable={editName} editableInputRef={roomNameInput} {id} size={s.toString()+"px"} />
+    <NodeToolbar class="text-slate-500" offset={-3}  position={Position.Top} align="center" nodeId={id}>
         {#if editName}
             <!-- svelte-ignore a11y_autofocus -->
-            <input autofocus {onfocus} class="w-full text-lg focus:bg-yellow-50 text-slate-500 bg-transparent" bind:value={name} onblur={()=>editName=false}>
+            <input bind:this={roomNameInput} {onfocus} class="w-full text-lg focus:bg-yellow-50 text-slate-500 bg-transparent" bind:value={name} {onblur}>
         {:else}
             <p ondblclick={()=>{editName=true}} class="font-bold text-lg text-slate-500">{name}</p>
         {/if}
     </NodeToolbar>
-    <NodeToolbar class="text-slate-500" offset={-5}  position={Position.Bottom} align="start" nodeId={id}>
+    <NodeToolbar class="text-slate-500" offset={-4}  position={Position.Bottom} align="start" nodeId={id}>
         <p class="font-extralight italic size-auto">{data?.id}</p>
     </NodeToolbar>
 <!-- {/if} -->

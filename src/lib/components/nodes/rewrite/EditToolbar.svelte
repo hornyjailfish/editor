@@ -1,77 +1,127 @@
 <script lang="ts">
-import { twMerge } from "tailwind-merge";
-import { fade, slide, scale } from "svelte/transition";
-import { RecordId, getIncrementalID, r } from "surrealdb";
-import { ControlButton, NodeToolbar, Position, useNodes } from "@xyflow/svelte";
+import { slide } from "svelte/transition";
+import { type Node, ControlButton, NodeToolbar, Position, useNodes } from "@xyflow/svelte";
 
 import * as Dialog from "$lib/components/ui/dialog";
 import * as Input from "$lib/components/ui/input";
-import * as Form from "$lib/components/ui/form";
-let { id, size, isVisible, ...rest } =  $props();
+import * as Field from "$lib/components/ui/field";
+
+import { resizer } from "$lib/components/Graph.svelte";
+import type { Board } from "$lib/server/schemas";
+
+let { id, size, isVisible, editable=$bindable(), editableInputRef, ...rest } =  $props();
 
 const nodes = useNodes();
 
-let editable = $state(false);
+let unsaved_count = $state(0);
+
+let open = $state(false);
 
 let openDiag = $state(false);
 let prompt = $state("");
 
-function addBoard() {
-    nodes.update(current=>{
-        current.push({
-            id: "unsaved-board"+getIncrementalID(),
+async function addBoard() {
+    $effect.root(()=>{ unsaved_count++ });
+    const uid = id.split(":")[1];
+    const child_id = ["unsaved", prompt, uid, unsaved_count].join("-");
+    $resizer.set(child_id, false); // add to resizer list for toolbar (change later?)
+    console.log("adding board", child_id, "to", id);
+    // $effect.root(()=>{
+        nodes.update((current)=>{
+        const item: Node<Board> = {
+            id: child_id,
             type: "boards",
+            parentId: id,
+            expandParent: true,
+            extent: "parent",
             position: { x: 0, y: 0 },
+            width: 64,
+            height: 64,
             data: {
                 name: prompt,
-                room: r(id)
+                room: id
             }
+        }
+            return [...current, item];
         });
-        return current;
-    });
+        // nodes.set(nodes.current)
+    // });
+    // await tick();
+
+    // nodes.update((current)=>current);
+}
+
+let errors: string | undefined = $state(undefined);
+async function onsubmit(e: SubmitEvent) {
+    e.preventDefault();
+    await addBoard();
+    openDiag = false;
+    prompt = "";
+}
+ function editName(e: MouseEvent) {
+    e.stopPropagation();
+    editable=!editable
+    // await tick();
+    // if (editable) {
+    //     editableInputRef?.focus();
+    // }
 }
 </script>
 
 <NodeToolbar {isVisible} offset={1} class="h-auto" position={Position.Right} align="start" nodeId={id}>
     <div class="border-l border-l-amber-500 flex flex-col gap-1 *:rounded-r-md items-start justify-baseline" in:slide={{ axis: "x" }} >
-    <ControlButton title="Edit" onclick={()=>editable=!editable}>
-        {#if !editable}
+    <ControlButton title="Edit" onclick={()=>open=!open}>
+        {#if !open}
             <span class="bg-rose-300 icon-[solar--lock-password-bold-duotone]"></span>
         {:else}
             <span class="text-sky-300 icon-[solar--lock-password-unlocked-bold-duotone]"></span>
         {/if}
     </ControlButton>
-    {#if editable}
+    {#if open}
         <div class="*:rounded-r-md flex flex-col gap-1" transition:slide={{ axis: "x" }}>
-                <Dialog.Root open={openDiag} onOpenChange={()=>{console.log(); openDiag=false}}>
-                    <Dialog.Content>
-                        <Dialog.Header>
-                            TST
-                        </Dialog.Header>
-                        <Dialog.Close />
-                        <Form.Field >
-                            <Form.Label >
-                                tst
-                            </Form.Label >
-                            <Input.Root class="w-full" bind:value={prompt} >
-                                <Input.Input />
-                            </Input.Root>
-                            <Form.FieldErrors />
-                            <Form.Button/>
-                        </Form.Field >
-                    </Dialog.Content>
-                    <Dialog.Footer>
-                    </Dialog.Footer>
-                    <Dialog.Trigger>
-                        <ControlButton class="mt-auto" title="Layout">
-                            <span class="bg-cyan-300 icon-[solar--widget-add-bold-duotone]"></span>
-                        </ControlButton>
-                    </Dialog.Trigger>
-                </Dialog.Root>
-                <ControlButton title="Add Board" onclick={()=>editable=false}>
-                    <span class="bg-emerald-300 icon-[solar--check-bold-duotone]"></span>
+                <ControlButton title="Rename" onclick={editName}>
+                    <span class="icon-[solar--clapperboard-edit-bold-duotone]"></span>
+                </ControlButton>
+                <ControlButton title="Add Board" onclick={()=>openDiag=true}>
+                    <span class="icon-[solar--clipboard-add-bold-duotone]"></span>
                 </ControlButton>
             </div>
     {/if}
     </div>
 </NodeToolbar>
+<NodeToolbar {isVisible} offset={1} class="h-auto" position={Position.Right} align="end" nodeId={id}>
+    <div class="border-l border-l-amber-500 flex flex-col gap-1 *:rounded-r-md items-start justify-baseline" in:slide={{ axis: "x" }} >
+        <ControlButton class="mt-auto " title="Layout">
+            <span class="bg-gray-300 icon-[solar--widget-add-bold-duotone]"></span>
+        </ControlButton>
+    </div>
+</NodeToolbar>
+
+<Dialog.Root open={openDiag} onOpenChange={()=>openDiag=!openDiag}>
+    <Dialog.Close />
+    <Dialog.Content>
+        <Dialog.Header>
+            Add new board?
+        </Dialog.Header>
+        <form {onsubmit}>
+        <Field.Field  >
+            <Field.Content>
+                <Field.Label for="name">
+                    name
+                </Field.Label>
+                <Input.Root id="name" placeholder="ЩР 1" class="w-full" bind:value={prompt} >
+                    <Input.Input />
+                </Input.Root>
+                <Field.Description>
+                    Enter board name
+                </Field.Description>
+            </Field.Content >
+            <Field.Error for="name">
+                {errors}
+            </Field.Error>
+        </Field.Field >
+        </form>
+    </Dialog.Content>
+    <Dialog.Footer>
+    </Dialog.Footer>
+</Dialog.Root>
