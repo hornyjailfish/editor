@@ -9,7 +9,7 @@ import * as Field from "$lib/components/ui/field";
 import { resizer } from "$lib/components/Graph.svelte";
 import type { Board } from "$lib/server/schemas";
 
-let { id, size, isVisible, editable=$bindable(), editableInputRef, ...rest } =  $props();
+let { id, size, isVisible, editable=$bindable(), ...rest } =  $props();
 
 const nodes = useNodes();
 
@@ -20,17 +20,18 @@ let open = $state(false);
 let openDiag = $state(false);
 let prompt = $state("");
 
-async function addBoard() {
+async function addBoard(type?: string) {
     $effect.root(()=>{ unsaved_count++ });
     const uid = id.split(":")[1];
-    const child_id = ["unsaved", prompt, uid, unsaved_count].join("-");
+    type = type || "group";
+    const child_id = ["unsaved", type, prompt, uid, unsaved_count].join("-");
     $resizer.set(child_id, false); // add to resizer list for toolbar (change later?)
     console.log("adding board", child_id, "to", id);
     // $effect.root(()=>{
         nodes.update((current)=>{
         const item: Node<Board> = {
             id: child_id,
-            type: "boards",
+            type,
             parentId: id,
             expandParent: true,
             extent: "parent",

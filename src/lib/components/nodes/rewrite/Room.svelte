@@ -92,13 +92,17 @@ function onblur(e: FocusEvent) {
 
 </script>
 
-<div {ondblclick} transition:fade bind:this={content} class="size-full flex items-stretch" {...rest}>
-    <NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-orange-400)" lineClass="h-8" nodeId={id} />
-    {name}
+<NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-orange-400)" lineClass="h-8" nodeId={id} />
+<div bind:this={content} transition:fade {ondblclick} class="size-full" role="list">
+    <div style:font-size={(s/4).toFixed()+"px"} class="text-stone-600 flex items-center justify-center size-full " {...rest}>
+        {#if !zoom}
+            <p>{name}</p>
+        {/if}
+    </div>
 </div>
-<!-- {#if zoom} -->
-    <EditToolbar isVisible={selected && zoom} bind:editable={editName} editableInputRef={roomNameInput} {id} size={s.toString()+"px"} />
-    <NodeToolbar class="text-slate-500" offset={-3}  position={Position.Top} align="center" nodeId={id}>
+<EditToolbar isVisible={selected && zoom} bind:editable={editName} {id} size={s.toString()+"px"} />
+{#if zoom}
+    <NodeToolbar isVisible={zoom}  class="text-slate-500" offset={-3}  position={Position.Top} align="center" nodeId={id}>
         {#if editName}
             <!-- svelte-ignore a11y_autofocus -->
             <input bind:this={roomNameInput} {onfocus} class="w-full text-lg focus:bg-yellow-50 text-slate-500 bg-transparent" bind:value={name} {onblur}>
@@ -106,7 +110,7 @@ function onblur(e: FocusEvent) {
             <p ondblclick={()=>{editName=true}} class="font-bold text-lg text-slate-500">{name}</p>
         {/if}
     </NodeToolbar>
-    <NodeToolbar class="text-slate-500" offset={-4}  position={Position.Bottom} align="start" nodeId={id}>
-        <p class="font-extralight italic size-auto">{data?.id}</p>
-    </NodeToolbar>
-<!-- {/if} -->
+{/if}
+<NodeToolbar class="text-slate-500" offset={-4}  position={Position.Bottom} align="start" nodeId={id}>
+    <p class="font-extralight italic size-auto">{data?.id}</p>
+</NodeToolbar>

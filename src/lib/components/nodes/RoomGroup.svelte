@@ -79,7 +79,6 @@ color: var(--xy-node-group-background-color-default, var(--xy-node-group-backgro
 text-align: left;
 }
 :global(.svelte-flow__node-electric_rooms) {
-padding: 10px;
 font-size: 10px;
 background-color: var(--xy-node-group-background-color-default, var(--xy-node-group-background-color-default));
 text-align: center;

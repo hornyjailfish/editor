@@ -54,7 +54,6 @@ $effect(()=>{
     });
 });
 
-
 async function onLayout() {
     try {
 
@@ -107,7 +106,6 @@ async function oninit() {
     dbNodes.forEach(n=>$resizer.set(n.id, false));
     // onLayout();
 }
-
 
 function onflowerror(e: any) {
     console.error(e);
