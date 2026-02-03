@@ -9,6 +9,7 @@ import Breaker from './Breaker.svelte';
 import RootBreaker from './RootBreaker.svelte';
 
 import RwRoom from './rewrite/Room.svelte';
+import RwBoard from './rewrite/Board.svelte';
 
 export default { Room, Board, Breaker, RootBreaker };
 
@@ -22,4 +23,5 @@ export const Base = {
 
 export const Rewrite = {
     Room: RwRoom,
+    Board: RwBoard
 };

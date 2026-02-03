@@ -23,8 +23,8 @@ let prompt = $state("");
 async function addBoard(type?: string) {
     $effect.root(()=>{ unsaved_count++ });
     const uid = id.split(":")[1];
-    type = type || "group";
-    const child_id = ["unsaved", type, prompt, uid, unsaved_count].join("-");
+    type = type || "unsaved_boards";
+    const child_id = [type, prompt, uid, unsaved_count].join("-");
     $resizer.set(child_id, false); // add to resizer list for toolbar (change later?)
     console.log("adding board", child_id, "to", id);
     // $effect.root(()=>{
@@ -59,6 +59,7 @@ async function onsubmit(e: SubmitEvent) {
     openDiag = false;
     prompt = "";
 }
+
  function editName(e: MouseEvent) {
     e.stopPropagation();
     editable=!editable
@@ -111,7 +112,6 @@ async function onsubmit(e: SubmitEvent) {
                     name
                 </Field.Label>
                 <Input.Root id="name" placeholder="ЩР 1" class="w-full" bind:value={prompt} >
-                    <Input.Input />
                 </Input.Root>
                 <Field.Description>
                     Enter board name

@@ -25,6 +25,7 @@ id = id || data?.id.toString();
     {#if zoom<0.8}
 	<p class="size-full text-stone-300 content-center text-[1em]">{data?.name}</p>
     {/if}
+</div>
     <NodeToolbar class="text-slate-500 h-full"  position={Position.Right} align="start" nodeId={id}>
 	<div class="flex flex-col gap-1 *:rounded-lg" transition:fade>
 	    <ControlButton   title="Add board" onclick={()=>console.log("click")}>
@@ -32,14 +33,12 @@ id = id || data?.id.toString();
 	    </ControlButton>
 	</div>
     </NodeToolbar>
-    <NodeToolbar isVisible={zoom>0.8} class="text-slate-500 text-lg" offset={-4}  position={Position.Top} align="center" nodeId={id}>
+    <NodeToolbar isVisible={zoom>0.8} class="text-slate-500 text-md" offset={-4}  position={Position.Top} align="center" nodeId={id}>
 	{data?.name}
     </NodeToolbar>
-</div>
 
 <style>
 :global(.svelte-flow__node-boards.selectable) {
-padding: 4px;
 border-radius: 2px;
 width: "auto";
 color: var(--color-stone-200, var(--xy-node-color-default));
