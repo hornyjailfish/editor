@@ -1,11 +1,13 @@
 <script lang="ts">
 import { fade } from 'svelte/transition';
-import { onMount, untrack } from 'svelte';
+import { onMount } from 'svelte';
+import { toast } from 'svelte-sonner';
 import { ControlButton, NodeResizer, NodeToolbar, Position, useOnSelectionChange, useSvelteFlow, type Edge, type Node, type NodeProps } from '@xyflow/svelte';
 import { Flow } from '$lib/utils';
 import type { Board } from '$lib/server/schemas';
 import { resizer } from '$lib/components/Graph.svelte';
-	import { toast } from 'svelte-sonner';
+import Dialog from '$lib/components/Dialog.svelte';
+import { type Form } from '$lib/components/Dialog.svelte';
 
 
 type Props = {
@@ -73,15 +75,26 @@ function ondblclick(e: MouseEvent) {
 // });
 // const onfocus = (e: FocusEvent &{ currentTarget: EventTarget & HTMLInputElement})=>e.currentTarget.select()
 const s = $derived((height*flow.getZoom()).toFixed());
-
+let openDialog = $state(false);
+let dialogData: Form = {
+    input: {
+        type: "input",
+        label: "Name",
+        description: "Enter board name",
+        fieldProps: { id: "name", placeholder: "ЩР 1", value: "" },
+        value: "",
+	errors: [],
+    }
+}
 // function onblur(e: FocusEvent) {
 //     e.stopPropagation();
 //     editName=false
 // }
-
+$inspect(dialogData);
 // TODO: validate data by schema here or on fetch?
 </script>
 
+<Dialog bind:open={openDialog} onsubmit={console.log} form={[dialogData]} />
 <NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-orange-400)" lineClass="h-8" nodeId={id} />
 <div bind:this={item} class="size-full flex items-stretch">
     {#if zoom<0.8}
@@ -93,9 +106,12 @@ const s = $derived((height*flow.getZoom()).toFixed());
 </div>
     <NodeToolbar class="text-slate-500 h-full"  position={Position.Right} align="start" nodeId={id}>
 	<div class="flex flex-col gap-1 *:rounded-lg" transition:fade>
-	    <ControlButton   title="Add board" onclick={()=>console.log("click")}>
+	    <ControlButton   title="Add breaker" onclick={()=>{openDialog=true}}>
 		<span class="icon-[material-symbols--add-2-rounded]"></span>
 	    </ControlButton>
+	<ControlButton  title="Rename board" onclick={()=>console.log("click")}>
+	    <span class="icon-[solar--clapperboard-edit-bold-duotone]"></span>
+	</ControlButton>
 	</div>
     </NodeToolbar>
     <NodeToolbar isVisible={zoom>0.8} class="text-slate-500 text-md" offset={-4}  position={Position.Top} align="center" nodeId={id}>
@@ -109,10 +125,10 @@ width: "auto";
 color: var(--color-amber-200, var(--xy-node-color-default));
 background-color: --alpha(var(--color-amber-700, var(--xy-node-background-color-default))/7%);
 text-align: center;
-border: var(--xy-node-border, var(--xy-node-border-default));
+border: 1px dotted --alpha(var(--color-amber-500)/30%);
 }
 :global(.svelte-flow__node-unsaved_boards.selected) {
-    border: 1px dotted --alpha(var(--color-amber-500)/30%);
+    border: 1px solid --alpha(var(--color-amber-500)/30%);
 }
 
 :global(.svelte-flow__node-boards.selectable) {

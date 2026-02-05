@@ -47,7 +47,7 @@ export type FlowOptions = {
 export const Flow: FlowOptions = {
 	nodeTypes: {
 		electric_rooms: Custom.Rewrite.Room,
-		boards: Custom.Base.Board,
+		boards: Custom.Rewrite.Board,
 		breakers: Custom.Base.Breaker,
 		root_breakers: Custom.Base.Breaker,
 		// INFO: these nodes created by user and not saved in db yet

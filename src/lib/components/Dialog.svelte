@@ -3,8 +3,8 @@ export type Form = {
     [key: string]: {
 	label: string,
 	description?: string,
-	type: "input" | "select" | "button" | "checkbox" | "radio",
-	fieldProps?: unknown,
+	type: "input" | "select" | "button" | "checkbox",
+	fieldProps?: object,
 	value?: unknown,
 	errors?: { message?: string }[];
     }
@@ -16,20 +16,19 @@ export type Props = {
     withCloseButton?: boolean,
     header?: string,
     footer?: string,
-    form?: Form,
+    form?: Form[],
 }
 </script>
 
-{#snippet input(props)}
-    <Input.Root  class="w-full" bind:value={form[0].value} >
-	<Input.Input />
-    </Input.Root>
-{/snippet}
-
 <script lang="ts">
+import type { Component } from "svelte";
+
+import { Button } from "./ui/button";
+import { Checkbox } from "./ui/checkbox";
 import * as Dialog from "./ui/dialog";
 import * as Field from "./ui/field";
 import * as Input from "./ui/input";
+import { Select } from "./ui/select";
 
 
 let {
@@ -38,13 +37,21 @@ let {
     withCloseButton = true,
     header = "",
     footer = "",
-    form = $bindable({}),
+    form = $bindable([]),
 }: Props = $props();
 
-const field = {
-    input: Input.Root,
+function submit(e: SubmitEvent) {
+    e.preventDefault();
+    console.log(form);
+    open = !open;
 }
 
+const field: { [key: Form["type"]]: Component } = {
+    input: Input.Root,
+    select: Select,
+    button: Button,
+    checkbox: Checkbox,
+}
 </script>
 
 <Dialog.Root {open} onOpenChange={()=>open=!open}>
@@ -55,27 +62,33 @@ const field = {
         <Dialog.Header>
 	    {header}
         </Dialog.Header>
-        <form {onsubmit}>
-	    {#if form && Object.keys(form).length == 1}
-		{@const [key, data] = Object.entries(form)[0]}
-		{@const Component = field[type]}
-		<Field.Field>
-		    <Field.Content>
-			<Field.Label for={key}>
-			    {data.label}
-			</Field.Label>
-			<Input.Root id={key} placeholder={data.fieldProps?.placeholder} class="w-full" bind:value={form[0].value} >
-			    <Input.Input />
-			</Input.Root>
-			<Field.Description>
-			    Enter board name
-			</Field.Description>
-		    </Field.Content >
-		    <Field.Error for="name" errors={form.errors}/>
+	{#if form }
+	    <form onsubmit={submit}>
+		<Field.Field >
+		    {#each form as item, j}
+			{#each Object.entries(item) as [key, data], i}
+			    {@const Component = field[data.type]}
+			    <Field.Field>
+				<Field.Content>
+				    {#if data.label}
+					<Field.Label for={key}>
+					    {data.label}
+					</Field.Label>
+				    {/if}
+				    <Component bind:value={form[j][key].value} {...data.fieldProps} />
+				    {#if data.description}
+					<Field.Description>
+					    {data.description}
+					</Field.Description>
+				    {/if}
+				</Field.Content >
+				<Field.Error for={key} errors={data.errors}/>
+			    </Field.Field >
+			{/each}
+		    {/each}
 		</Field.Field >
-	    {:else}
-	    {/if}
-        </form>
+	    </form>
+	{/if}
     </Dialog.Content>
     <Dialog.Footer>
 	{footer}
