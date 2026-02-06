@@ -27,14 +27,14 @@ export const roomDimensions = {
 }
 
 export const boardDimensions = {
-	width: 32,
-	height: 32,
+	width: 64,
+	height: 64,
 	position: { x: 0, y: 0 },
 }
 
 export const breakerDimensions = {
-	width: 8,
-	height: 8,
+	width: 16,
+	height: 16,
 	position: { x: 0, y: 0 },
 }
 
@@ -46,42 +46,57 @@ export type FlowOptions = {
 };
 export const Flow: FlowOptions = {
 	nodeTypes: {
-		electric_rooms: Custom.BasedRoom,
-		boards: Custom.BasedBoard,
-		breakers: Custom.BasedBreaker,
-		root_breakers: Custom.BasedRootBreaker,
+		electric_rooms: Custom.Rewrite.Room,
+		boards: Custom.Rewrite.Board,
+		breakers: Custom.Base.Breaker,
+		root_breakers: Custom.Base.Breaker,
+		// INFO: these nodes created by user and not saved in db yet
+		unsaved_boards: Custom.Rewrite.Board,
+		unsaved_brekers: Custom.Base.Breaker,
+		unsaved_root_breakers: Custom.Base.Breaker,
 	},
+	// nodeTypes: {
+	// 	electric_rooms: Custom.Room,
+	// 	boards: Custom.Board,
+	// 	breakers: Custom.Breaker,
+	// 	root_breakers: Custom.RootBreaker,
+	// },
 	dimensions: {
 		electric_rooms: roomDimensions,
 		boards: boardDimensions,
 		breakers: breakerDimensions,
 		root_breakers: breakerDimensions,
+		unsaved_boards: boardDimensions,
+		unsaved_breakers: breakerDimensions,
+		unsaved_root_breakers: breakerDimensions,
 	},
 	flowOptions: {
 		electric_rooms: {
 			connectable: false,
 			deletable: false,
-			expandParent: false,
+			expandParent: true,
+			extent: "parent",
+			ariaLabel: "Room",
 			zIndex: 1,
 		},
 		boards: {
 			connectable: false,
 			draggable: true,
-			expandParent: false,
+			expandParent: true,
 			extent: "parent",
-			zIndex: 5,
+			zIndex: 2,
 		},
 		breakers: {
 			connectable: true,
 			draggable: true,
-			expandParent: false,
+			expandParent: true,
 			extent: "parent",
 			zIndex: 9,
 		},
 		root_breakers: {
 			connectable: true,
 			draggable: false,
-			expandParent: false,
+			expandParent: true,
 			extent: "parent",
 			zIndex: 9,
 		},
@@ -93,7 +108,7 @@ export const Flow: FlowOptions = {
 			"hierarchyHandling": "INCLUDE_CHILDREN"
 		},
 		boards: {
-			"elk.algorithm": "rectpacking",
+			"elk.algorithm": "layered",
 			"elk.direction": "RIGHT",
 			"hierarchyHandling": "INCLUDE_CHILDREN"
 		},
@@ -115,6 +130,8 @@ export function toNode(item: ActionResult<{}>, parentId_filedName?: string): Nod
 		type: item.id.tb,
 		data: item,
 		parentId: parentId_filedName ? item[parentId_filedName].toString(): undefined,
+		initialWidth: Flow.dimensions[item.id.tb].width,
+		initialHeight: Flow.dimensions[item.id.tb].height,
 		...Flow.dimensions[item.id.tb],
 		...Flow.flowOptions[item.id.tb],
 	}
