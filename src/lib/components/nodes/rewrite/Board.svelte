@@ -24,7 +24,6 @@ const zoom = $derived.by(getZoom);
 let { id, type, data, class: className, width, height, ...rest }: Props = $props();
 id = id || data?.id!.toString();
 
-$inspect(type);
 
 let editName = $state(false);
 let name = $state(data?.name);
@@ -77,11 +76,27 @@ function ondblclick(e: MouseEvent) {
 const s = $derived((height*flow.getZoom()).toFixed());
 let openDialog = $state(false);
 let dialogData: Form = {
-    input: {
+    name: {
         type: "input",
         label: "Name",
         description: "Enter board name",
-        fieldProps: { id: "name", placeholder: "ЩР 1", value: "" },
+        fieldProps: { id: "name", placeholder: "ЩР 1" },
+        value: "",
+	errors: [],
+    },
+    description: {
+        type: "input",
+        label: "Description",
+        description: "description",
+        fieldProps: { id: "desc", placeholder: ""  },
+        value: "",
+	errors: [],
+    },
+    value: {
+        type: "input",
+        label: "Value",
+        description: "enter value",
+        fieldProps: { id: "value", type: "number", placeholder: "100", value: "" },
         value: "",
 	errors: [],
     }
@@ -90,11 +105,10 @@ let dialogData: Form = {
 //     e.stopPropagation();
 //     editName=false
 // }
-$inspect(dialogData);
 // TODO: validate data by schema here or on fetch?
 </script>
 
-<Dialog bind:open={openDialog} onsubmit={console.log} form={[dialogData]} />
+<Dialog bind:open={openDialog} onsubmit={console.log} form={dialogData} />
 <NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-orange-400)" lineClass="h-8" nodeId={id} />
 <div bind:this={item} class="size-full flex items-stretch">
     {#if zoom<0.8}

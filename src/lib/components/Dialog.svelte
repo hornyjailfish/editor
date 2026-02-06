@@ -1,23 +1,24 @@
 <script module>
+export type FormTypes = "input" | "select" | "button" | "checkbox";
 export type Form = {
     [key: string]: {
 	label: string,
 	description?: string,
-	type: "input" | "select" | "button" | "checkbox",
+	type: FormTypes,
 	fieldProps?: object,
 	value?: unknown,
 	errors?: { message?: string }[];
     }
-}
+};
 
 export type Props = {
     open?: boolean,
-    onsubmit?: (e: SubmitEvent) => void,
+    onsubmit: (values: {[key: string]: any}) => void,
     withCloseButton?: boolean,
     header?: string,
     footer?: string,
-    form?: Form[],
-}
+    form: Form,
+};
 </script>
 
 <script lang="ts">
@@ -25,10 +26,11 @@ import type { Component } from "svelte";
 
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
+import  * as Select  from "./ui/select";
+import { Input } from "./ui/input";
+
 import * as Dialog from "./ui/dialog";
 import * as Field from "./ui/field";
-import * as Input from "./ui/input";
-import { Select } from "./ui/select";
 
 
 let {
@@ -37,18 +39,21 @@ let {
     withCloseButton = true,
     header = "",
     footer = "",
-    form = $bindable([]),
+    form,
 }: Props = $props();
 
 function submit(e: SubmitEvent) {
     e.preventDefault();
-    console.log(form);
     open = !open;
+    const out = Object.entries(form).map(([key, data])=>{
+	return { [key]: data.value }
+    });
+    onsubmit(out);
 }
 
-const field: { [key: Form["type"]]: Component } = {
-    input: Input.Root,
-    select: Select,
+const field: { [key in FormTypes]: Component<typeof Input | typeof Select.Root | typeof Button | typeof Checkbox> } = {
+    input: Input,
+    select: Select.Root,
     button: Button,
     checkbox: Checkbox,
 }
@@ -64,18 +69,17 @@ const field: { [key: Form["type"]]: Component } = {
         </Dialog.Header>
 	{#if form }
 	    <form onsubmit={submit}>
-		<Field.Field >
-		    {#each form as item, j}
-			{#each Object.entries(item) as [key, data], i}
+		<Field.Group >
+		    <!-- {#each form as item, j} -->
+			{#each Object.entries(form) as [key, data], i}
 			    {@const Component = field[data.type]}
-			    <Field.Field>
 				<Field.Content>
 				    {#if data.label}
 					<Field.Label for={key}>
 					    {data.label}
 					</Field.Label>
 				    {/if}
-				    <Component bind:value={form[j][key].value} {...data.fieldProps} />
+				    <Component bind:value={form[key].value} {...data.fieldProps} />
 				    {#if data.description}
 					<Field.Description>
 					    {data.description}
@@ -83,10 +87,10 @@ const field: { [key: Form["type"]]: Component } = {
 				    {/if}
 				</Field.Content >
 				<Field.Error for={key} errors={data.errors}/>
-			    </Field.Field >
 			{/each}
-		    {/each}
-		</Field.Field >
+		    <!-- {/each} -->
+		    <Button type="submit">Submit</Button>
+		</Field.Group >
 	    </form>
 	{/if}
     </Dialog.Content>
