@@ -6,7 +6,7 @@ import { ControlButton, NodeResizer, NodeToolbar, Position, useOnSelectionChange
 import { Flow } from '$lib/utils';
 import type { Board } from '$lib/server/schemas';
 import { resizer } from '$lib/components/Graph.svelte';
-import Dialog from '$lib/components/Dialog.svelte';
+import Dialog, { type FormTypes } from '$lib/components/Dialog.svelte';
 import { type Form } from '$lib/components/Dialog.svelte';
 
 
@@ -75,20 +75,28 @@ function ondblclick(e: MouseEvent) {
 // const onfocus = (e: FocusEvent &{ currentTarget: EventTarget & HTMLInputElement})=>e.currentTarget.select()
 const s = $derived((height*flow.getZoom()).toFixed());
 let openDialog = $state(false);
-let dialogData: Form = {
+let dialogData: Form<FormTypes> = {
     name: {
         type: "input",
         label: "Name",
         description: "Enter board name",
-        fieldProps: { id: "name", placeholder: "ЩР 1" },
+        fieldProps: { id: "name", placeholder: "Q99" },
         value: "",
 	errors: [],
     },
     description: {
-        type: "input",
+        type: "select",
         label: "Description",
         description: "description",
-        fieldProps: { id: "desc", placeholder: ""  },
+        fieldProps: {
+	    id: "description",
+	    value: "",
+	    data: [
+		{label: "a", value: "A"},
+		{label: "b", value: "B"},
+		{label: "c", value: "C"}
+	    ]
+	},
         value: "",
 	errors: [],
     },

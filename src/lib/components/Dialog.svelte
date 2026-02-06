@@ -1,11 +1,24 @@
 <script module>
+import { Button } from "./ui/button";
+import { Checkbox } from "./ui/checkbox";
+import  Select  from "$lib/components/Select.svelte";
+import { Input } from "./ui/input";
+
 export type FormTypes = "input" | "select" | "button" | "checkbox";
-export type Form = {
+
+export type FieldProps<T extends FormTypes> =
+    T extends "input" ? typeof Input:
+    T extends "select" ? typeof Select.Root:
+    T extends "button" ? typeof Button:
+    T extends "checkbox" ? typeof Checkbox:
+    never;
+
+export type Form<T extends FormTypes> = {
     [key: string]: {
 	label: string,
 	description?: string,
-	type: FormTypes,
-	fieldProps?: object,
+	type: T,
+	fieldProps?: FieldProps<T>,
 	value?: unknown,
 	errors?: { message?: string }[];
     }
@@ -17,17 +30,12 @@ export type Props = {
     withCloseButton?: boolean,
     header?: string,
     footer?: string,
-    form: Form,
+    form: Form<FormTypes>,
 };
 </script>
 
 <script lang="ts">
 import type { Component } from "svelte";
-
-import { Button } from "./ui/button";
-import { Checkbox } from "./ui/checkbox";
-import  * as Select  from "./ui/select";
-import { Input } from "./ui/input";
 
 import * as Dialog from "./ui/dialog";
 import * as Field from "./ui/field";
@@ -49,11 +57,14 @@ function submit(e: SubmitEvent) {
 	return { [key]: data.value }
     });
     onsubmit(out);
+    form.forEach(item=>{
+	item.value = undefined
+    })
 }
 
 const field: { [key in FormTypes]: Component<typeof Input | typeof Select.Root | typeof Button | typeof Checkbox> } = {
     input: Input,
-    select: Select.Root,
+    select: Select,
     button: Button,
     checkbox: Checkbox,
 }
@@ -71,23 +82,28 @@ const field: { [key in FormTypes]: Component<typeof Input | typeof Select.Root |
 	    <form onsubmit={submit}>
 		<Field.Group >
 		    <!-- {#each form as item, j} -->
-			{#each Object.entries(form) as [key, data], i}
-			    {@const Component = field[data.type]}
-				<Field.Content>
-				    {#if data.label}
-					<Field.Label for={key}>
-					    {data.label}
-					</Field.Label>
-				    {/if}
-				    <Component bind:value={form[key].value} {...data.fieldProps} />
-				    {#if data.description}
-					<Field.Description>
-					    {data.description}
-					</Field.Description>
-				    {/if}
-				</Field.Content >
-				<Field.Error for={key} errors={data.errors}/>
-			{/each}
+		    {#each Object.entries(form) as [key, data], i}
+			{@const Component = field[data.type]}
+			<Field.Field orientation="responsive">
+			    <Field.Content>
+				{#if data.label}
+				    <Field.Label for={key}>
+					{data.label}
+				    </Field.Label>
+				{/if}
+				<Component bind:value={form[key].value} {...data.fieldProps} />
+				{#if data.description}
+				    <Field.Description>
+					{data.description}
+				    </Field.Description>
+				{/if}
+				{#if data.errors}
+				    <Field.Error for={key} errors={data.errors}/>
+				{/if}
+			    </Field.Content >
+			</Field.Field>
+			<Field.Separator />
+		    {/each}
 		    <!-- {/each} -->
 		    <Button type="submit">Submit</Button>
 		</Field.Group >
