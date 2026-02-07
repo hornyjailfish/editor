@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type Node } from "@xyflow/svelte";
+    import { useSvelteFlow, type Node } from "@xyflow/svelte";
     import type { NodeProps } from "@xyflow/system";
     import type { HTMLAttributes } from "svelte/elements";
 
@@ -17,6 +17,7 @@
         type,
         ...rest
     }: Props = $props();
+
 
     let board: HTMLElement | undefined = $state();
 </script>

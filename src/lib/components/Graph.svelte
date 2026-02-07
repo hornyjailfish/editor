@@ -8,15 +8,13 @@ export const client_edges = writable<Edge[]>([]);
 </script>
 
 <script lang="ts">
-import type { ELK, ElkExtendedEdge, ElkNode } from 'elkjs/lib/elk-api';
+import type { ELK } from 'elkjs/lib/elk-api';
 
 import { Uuid } from 'surrealdb';
 import { twMerge } from 'tailwind-merge';
-import { error } from '@sveltejs/kit';
 import {
     useSvelteFlow,
-    useNodes,
-    type OnConnectEnd,
+    useNodesInitialized,
     SvelteFlow,
     Panel,
     Controls,
@@ -28,88 +26,55 @@ import {
     type ColorMode,
     useOnSelectionChange,
 } from '@xyflow/svelte';
+import { toast } from "svelte-sonner";
 import Button from '$lib/components/Button.svelte';
 
 // INFO: custom node types use global css class for styling
 // each node wrapper has class "svelte-flow__node-{type}"
 // where "type" is key from this table
-// make sure keys in this table match styles in respective node component
+// make sure keys in utls match styles in respective node component
 
-import { Flow, splitByParent, toElk } from '$lib/utils';
+import { Flow } from '$lib/utils';
 import Toolbar  from './Toolbar.svelte';
-import { nestedToFlat } from "$lib/client/utls";
 
-let { elk, nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps & { elk: ELK } = $props();
-const { fitView } = useSvelteFlow();
+let { nodes=$bindable([]), edges=$bindable([]), colorMode=$bindable("system") }: SvelteFlowProps & { elk: ELK | null } = $props();
 
-async function layout(nodes: Node[],edges: Edge[], options: any) {
-    if (!elk) return { nodes, edges }; // TODO: throw?
-    const groups = splitByParent(nodes);
-    const [rooms, boards, breakers] = Object.values(groups);
-    const base = toElk(rooms, boards, breakers);
-    const elkGraph = await elk.layout(base, options);
-    const flaten: ElkNode[] = nestedToFlat(elkGraph.children);
-    const layoutedNodes = nodes.map((node)=>{
-        let elkNode
-        // INFO: there are only 3 nested levels right now Room-->Board-->Breaker
-        // if it changes should rewrite it to maps/sets for better performance
-        elkNode = flaten.find(n=>n.id === node.id );
-        if (!elkNode) {
-            console.log("node not found:", node.id);
-            return node;
-        }
-        return {
-            ...node,
-            position: {
-                x: elkNode.x,
-                y: elkNode.y,
-            },
-            width: elkNode.width,
-            height: elkNode.height,
-        };
+let dbNodes: Node[] = $state.raw(nodes);
+const { fitView, getZoom, updateNode, getNodes } = useSvelteFlow();
+
+const boards = dbNodes.filter(n=>n.type == "breakers");
+const zoom = $derived.by(getZoom);
+const isHidden = $derived(zoom<0.8);
+
+
+$effect(()=>{
+    boards.forEach(n=>{
+        n.hidden = isHidden;
+        updateNode(n.id,{ hidden: isHidden });
     });
-    return { nodes: layoutedNodes, edges };
-}
-const store = useNodes();
+});
+
 async function onLayout() {
     try {
-        let options = {
-            "elk.algorithm": "layered",
-            "elk.direction": "RIGHT",
-            "elk.spacing.nodeNode": "8",
-            "elk.padding": "4",
-            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-        };
-        const withLayout = await layout($state.snapshot(store.current), edges, options);
-        nodes = withLayout.nodes
-        edges = withLayout.edges
+
+        // const withLayout = await layout(dbNodes, edges, options);
+        // dbNodes = withLayout.nodes
+        // edges = withLayout.edges
+
         fitView();
     } catch (e: any) {
-        error(400, e.message);
+        toast.error(e.message);
     }
 }
 
-const { screenToFlowPosition } = useSvelteFlow();
+let once = true;
+$effect.pre(() => {
+    if(useNodesInitialized().current && once) {
+        // onLayout();
+        once = false;
+    }
+});
 
-const onconnectend: OnConnectEnd = (event, state) => {
-    if (state.isValid)  return;
-    const { clientX, clientY } = 'changedTouches' in event ? event.changedTouches[0] : event;
-    const parent = state.fromNode?.parentId
-    console.log("empty connect!", parent);
-    // TODO: handle out of group case
-}
-
-async function testRoom() {
-    const id = Uuid.v4().toString();
-    console.log("add room", id);
-    nodes.push({
-        id,
-        type: 'electric_rooms',
-        data: { id, name: 'щ 69' },
-        position: { x: 0, y: 0 }
-    });
-    await onLayout();
-}
 
 type Theme = { mode: ColorMode, icon: string };
 const themes: Theme[] = [
@@ -123,10 +88,10 @@ function toggleColorMode() {
     themeIdx =  (themeIdx + 1) % themes.length;
 }
 
-const node = useNodes();
 $effect(() => {
     colorMode = themes[themeIdx].mode;
 });
+
 
 let selectedNodesIds = $state<string[]>([]);
 let selectedNodes = $state<Node[]>([]);
@@ -137,21 +102,26 @@ useOnSelectionChange(({nodes})=>{
 });
 
 let selectionReady = $state(true);
-function oninit() {
-    nodes.forEach(n=>$resizer.set(n.id, false));
+async function oninit() {
+    dbNodes.forEach(n=>$resizer.set(n.id, false));
+    // onLayout();
 }
 
+function onflowerror(e: any) {
+    console.error(e);
+    toast.error("Flow error: "+e.message);
+}
 </script>
 
 <SvelteFlow
-    onresize={(e)=>{console.log("load", e)}}
     proOptions={{hideAttribution: true}}
     {oninit}
-    onselectionend={(e)=>{selectionReady = true}}
-    onselectionstart={(e)=>{selectionReady = false}}
+    {onflowerror}
+    onselectionend={()=>{selectionReady = true}}
+    onselectionstart={()=>{selectionReady = false}}
     selectionOnDrag
     panOnDrag={[1]}
-    {nodes}
+    nodes={dbNodes}
     {edges}
     {colorMode}
     nodeTypes={Flow.nodeTypes}
@@ -163,12 +133,6 @@ function oninit() {
     <Toolbar ready={selectionReady}  />
     <Controls position="top-right"  />
     <Panel class="bg-transparent p-1 flex flex-row gap-2 justify-center items-center w-auto h-fit" position="bottom-center">
-        <Button class="text-emerald-600"  onclick={()=>testRoom()}>
-            {#snippet children()}
-                <span class="text-emerald-600 size-6 icon-[material-symbols--add-2-rounded]"></span>
-                <div class="size-auto">Add Room</div>
-            {/snippet}
-        </Button>
         <Button onclick={()=>onLayout()}>
             {#snippet children()}
                 <span class="text-amber-600 size-6 icon-[material-symbols--responsive-layout-outline-rounded]"></span>
@@ -177,7 +141,7 @@ function oninit() {
         </Button>
     </Panel>
     <Panel class="bg-transparent p-1 flex flex-row gap-2 justify-center items-center w-auto h-fit" position="bottom-right">
-        <Button title="Update db" --color="var(--color-rose-400)" class="hover:bg-rose-200 hover:text-rose-500" onclick={()=>console.log("click")}>
+        <Button title="Update db" --color="var(--color-rose-400)" class="hover:bg-rose-200 hover:text-rose-500" onclick={()=>console.log(dbNodes)}>
             {#snippet children()}
                 <span class="size-6 icon-[material-symbols--database-upload-outline-rounded]"></span>
             {/snippet}
