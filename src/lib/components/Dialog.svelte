@@ -53,13 +53,16 @@ let {
 function submit(e: SubmitEvent) {
     e.preventDefault();
     open = !open;
-    const out = Object.entries(form).map(([key, data])=>{
-	return { [key]: data.value }
+    console.log(form);
+    const out = Object.entries(form).reduce((acc, entry)=>{
+	// console.log(entry);
+	acc[entry[0]] = entry[1].value;
+	return acc;
     });
     onsubmit(out);
-    form.forEach(item=>{
-	item.value = undefined
-    })
+    Object.entries(form).forEach(([k,_])=>{
+	form[k].value = undefined
+    });
 }
 
 const field: { [key in FormTypes]: Component<typeof Input | typeof Select.Root | typeof Button | typeof Checkbox> } = {

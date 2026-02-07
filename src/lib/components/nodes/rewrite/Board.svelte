@@ -2,7 +2,7 @@
 import { fade } from 'svelte/transition';
 import { onMount } from 'svelte';
 import { toast } from 'svelte-sonner';
-import { ControlButton, NodeResizer, NodeToolbar, Position, useOnSelectionChange, useSvelteFlow, type Edge, type Node, type NodeProps } from '@xyflow/svelte';
+import { ControlButton, NodeResizer, NodeToolbar, Position, useNodes, useOnSelectionChange, useSvelteFlow, type Edge, type Node, type NodeProps } from '@xyflow/svelte';
 import { Flow } from '$lib/utils';
 import type { Board } from '$lib/server/schemas';
 import { resizer } from '$lib/components/Graph.svelte';
@@ -19,7 +19,7 @@ let item: HTMLDivElement | undefined = $state();
 
 const { getZoom } = useSvelteFlow();
 const zoom = $derived.by(getZoom);
-
+const nodes = useNodes();
 
 let { id, type, data, class: className, width, height, ...rest }: Props = $props();
 id = id || data?.id!.toString();
@@ -73,7 +73,9 @@ function ondblclick(e: MouseEvent) {
 //     }
 // });
 // const onfocus = (e: FocusEvent &{ currentTarget: EventTarget & HTMLInputElement})=>e.currentTarget.select()
+
 const s = $derived((height*flow.getZoom()).toFixed());
+
 let openDialog = $state(false);
 let dialogData: Form<FormTypes> = {
     name: {
@@ -109,6 +111,37 @@ let dialogData: Form<FormTypes> = {
 	errors: [],
     }
 }
+
+let unsaved_count = $state(0);
+
+async function createBreaker(data: {[key: keyof typeof dialogData]: any}) {
+    $effect.root(()=>{ unsaved_count++ });
+    const uid = id.split(":")[1];
+    type = "unsaved_breakers";
+    const child_id = [type, data.name, uid, unsaved_count].join("-");
+    $resizer.set(child_id, false); // add to resizer list for toolbar (change later?)
+    console.log("adding breaker", child_id, "to", id);
+    // console.log(data);
+    // $effect.root(()=>{
+        nodes.update((current)=>{
+        const item: Node<Board> = {
+            id: child_id,
+            type,
+            parentId: id,
+            expandParent: true,
+            extent: "parent",
+            position: { x: 0, y: 0 },
+            width: 16,
+            height: 16,
+            data: {
+                ...data,
+                room: id
+            }
+        }
+            return [...current, item];
+        });
+}
+
 // function onblur(e: FocusEvent) {
 //     e.stopPropagation();
 //     editName=false
@@ -116,7 +149,7 @@ let dialogData: Form<FormTypes> = {
 // TODO: validate data by schema here or on fetch?
 </script>
 
-<Dialog bind:open={openDialog} onsubmit={console.log} form={dialogData} />
+<Dialog bind:open={openDialog} onsubmit={createBreaker} form={dialogData} />
 <NodeResizer {...resizeProps} isVisible={selected && resizeable} color="var(--color-orange-400)" lineClass="h-8" nodeId={id} />
 <div bind:this={item} class="size-full flex items-stretch">
     {#if zoom<0.8}

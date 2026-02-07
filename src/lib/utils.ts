@@ -52,7 +52,7 @@ export const Flow: FlowOptions = {
 		root_breakers: Custom.Base.Breaker,
 		// INFO: these nodes created by user and not saved in db yet
 		unsaved_boards: Custom.Rewrite.Board,
-		unsaved_brekers: Custom.Base.Breaker,
+		unsaved_breakers: Custom.Base.Breaker,
 		unsaved_root_breakers: Custom.Base.Breaker,
 	},
 	// nodeTypes: {
